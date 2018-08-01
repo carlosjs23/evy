@@ -1,12 +1,17 @@
 import 'dart:io';
 
+import 'package:evy/src/request.dart';
+
+typedef void RouteCallback(Request request, HttpResponse response);
+
 class Route {
   final String method;
   final Map path;
+  final String _path;
   final callback;
 
-  Route(this.method, String pathParam, this.callback, {List<String> keys})
-      : path = _normalize(pathParam, keys: keys);
+  Route(this.method, this._path, this.callback, {List<String> keys})
+      : path = _normalize(_path, keys: keys);
 
   bool match(HttpRequest request) {
     return (method == request.method &&
@@ -51,7 +56,6 @@ class Route {
     return {'regexp': new RegExp('^$path\$'), 'keys': keys};
   }
 
-  //TODO: Parsed params should be added to request object.
   Map _parseParams(String path, Map routePath) {
     var params = {};
     Match paramsMatch = routePath['regexp'].firstMatch(path);
@@ -66,5 +70,12 @@ class Route {
       params[routePath['keys'][i]] = param;
     }
     return params;
+  }
+
+  void handleRequest(HttpRequest httpRequest) {
+    Request request = Request.from(httpRequest);
+    request.route = _path;
+    request.params = _parseParams(httpRequest.uri.path, path);
+    callback(request, httpRequest.response);
   }
 }
