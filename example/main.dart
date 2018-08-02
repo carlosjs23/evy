@@ -6,11 +6,13 @@ void main() {
 
   app.get(path: '/greet/:name', callback: sayHello);
 
+  app.post(path: '/greet/', callback: sayHello);
+
   app.get(path: '/greet/:name/beatiful/:question', callback: sayHelloBeatiful);
 
   app.listen(port: 3000, callback: (error) {
     if (error != null) {
-      print('An error has ocurred: ${error}');
+      print(error);
     } else {
       print('Server listening on port 3000');
     }
@@ -18,7 +20,9 @@ void main() {
 }
 
 void sayHello(Request req, HttpResponse res) {
-  res.write('Hello ${req.params['name']}');
+  if (req.method != 'POST') {
+    res.write('Hello ${req.params['name']}');
+  }
   res.close();
 }
 

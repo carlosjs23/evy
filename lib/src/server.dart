@@ -10,25 +10,25 @@ class Evy {
 
   void listen(
       {String host: 'localhost', int port: 9710, VoidCallback callback}) async {
-    await HttpServer.bind(
-      host,
-      port,
-    ).then((HttpServer server) {
-      _server = server;
+    try {
+      _server = await HttpServer.bind(
+        host,
+        port,
+      );
       callback(null);
       _server.listen((HttpRequest request) {
         _handleRequest(request);
       });
-    }).catchError((error) {
+    } catch (error) {
       callback(error);
-    });
+    }
   }
 
   void _handleRequest(HttpRequest request) {
     Route route = _routes.firstWhere((Route _route) => _route.match(request),
         orElse: () => null);
     if (route != null) {
-      route.handleRequest(request);
+      route.handleRequest();
     } else {
       request.response.statusCode = HttpStatus.notFound;
       request.response.write('404 Not Found');

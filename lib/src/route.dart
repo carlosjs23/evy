@@ -9,12 +9,14 @@ class Route {
   final Map path;
   final String _path;
   final callback;
+  HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback, {List<String> keys})
       : path = _normalize(_path, keys: keys);
 
   bool match(HttpRequest request) {
-    return (method == request.method &&
+    _httpRequest = request;
+    return ((method == request.method || method == 'MIDDLEWARE') &&
         (path['regexp'] as RegExp).hasMatch(request.uri.path));
   }
 
@@ -72,10 +74,14 @@ class Route {
     return params;
   }
 
-  void handleRequest(HttpRequest httpRequest) {
-    Request request = Request.from(httpRequest);
+  void handleRequest() {
+    Request request = Request.from(_httpRequest);
     request.route = _path;
-    request.params = _parseParams(httpRequest.uri.path, path);
-    callback(request, httpRequest.response);
+    request.params = _parseParams(_httpRequest.uri.path, path);
+    callback(request, _httpRequest.response);
+  }
+
+  void next() {
+    handleRequest();
   }
 }
