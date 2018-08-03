@@ -4,19 +4,18 @@ import 'package:evy/src/response.dart';
 
 import 'request.dart';
 
-typedef void VoidCallback();
-typedef void RouteCallback(Request request, Response response, VoidCallback next);
+typedef void RouteCallback(Request request, Response response, void next);
 
 class Route {
   final String method;
   final Map path;
-  final String _path;
-  final callback;
-  List<RouteCallback> _middlewares;
+  final dynamic _path;
+  final RouteCallback callback;
+  List<RouteCallback> _middlewares = List<RouteCallback>();
   HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback,
-      {List<String> keys, middlewares = const []})
+      {List<String> keys, List<RouteCallback> middlewares})
       : path = _normalize(_path, keys: keys) {
     this._middlewares = middlewares;
     this._middlewares.add((req, res, next) {
@@ -28,7 +27,7 @@ class Route {
 
   bool match(HttpRequest request) {
     _httpRequest = request;
-    return ((method == request.method || method == 'MIDDLEWARE') &&
+    return (method == request.method &&
         (path['regexp'] as RegExp).hasMatch(request.uri.path));
   }
 
@@ -105,7 +104,8 @@ class Route {
     if (_middlewares != null && _middlewares.isNotEmpty) {
       _runMiddleware(0, request, response);
     } else {
-      response.send('Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
+      response.send(
+          'Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
     }
   }
 }

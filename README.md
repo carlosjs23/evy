@@ -34,6 +34,10 @@ void main() {
 
   app.get(path: '/greet/:name', callback: sayHello, middlewares: [checkName, changeName]);
 
+  app.get(path: RegExp('/.*evy'), callback: sayHello);
+
+  app.get(path: ['/users', '/user', '/client'], callback: sayHello);
+
   app.listen(port: 3000, callback: (error) {
     if (error != null) {
       print(error);
@@ -43,15 +47,19 @@ void main() {
   });
 }
 
-void sayHello(Request req, Response res) {
-  res.send('Hello ${req.params['name']}');
+void sayHello(Request req, Response res, next) {
+  if (req.params['name'] != null)
+    res.send('Hello ${req.params['name']}');
+  else
+    res.send('Hello');
 }
 
 void checkName(Request req, Response res, next) {
   if (req.params['name'] != 'Alberto') {
     res.send('Only Alberto is allowed to use this action');
+  } else {
+    next();
   }
-  next();
 }
 
 void changeName(Request req, Response res, next) {

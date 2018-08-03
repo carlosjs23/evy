@@ -3,7 +3,9 @@ import 'dart:io';
 class Request {
   HttpRequest _httpRequest;
   Map params;
-  String route;
+
+  // The route can be an RegExp, a List or an String
+  dynamic route;
 
   // TODO: Implement body parser.
   Map body;
