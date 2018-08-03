@@ -14,15 +14,16 @@ void main() {
   });
 }
 
-void sayHello(Request req, Response res) {
+void sayHello(Request req, Response res, next) {
   res.send('Hello ${req.params['name']}');
 }
 
 void checkName(Request req, Response res, next) {
   if (req.params['name'] != 'Alberto') {
     res.send('Only Alberto is allowed to use this action');
+  } else {
+    next();
   }
-  next();
 }
 
 void changeName(Request req, Response res, next) {

@@ -4,20 +4,27 @@ import 'package:evy/src/response.dart';
 
 import 'request.dart';
 
-typedef void RouteCallback(Request request, Response response);
+typedef void VoidCallback();
+typedef void RouteCallback(Request request, Response response, VoidCallback next);
 
 class Route {
   final String method;
   final Map path;
   final String _path;
   final callback;
-  List<dynamic> _middlewares;
+  List<RouteCallback> _middlewares;
   HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback,
-      {List<String> keys, middlewares})
-      : path = _normalize(_path, keys: keys),
-        _middlewares = middlewares;
+      {List<String> keys, middlewares = const []})
+      : path = _normalize(_path, keys: keys) {
+    this._middlewares = middlewares;
+    this._middlewares.add((req, res, next) {
+      if (!res.closed) {
+        this.callback(req, res, next);
+      }
+    });
+  }
 
   bool match(HttpRequest request) {
     _httpRequest = request;
@@ -79,22 +86,26 @@ class Route {
     return params;
   }
 
+  void _runMiddleware(int index, Request request, Response response) {
+    var middleware = _middlewares[index];
+
+    var nextCallback = () {
+      _runMiddleware(++index, request, response);
+    };
+
+    middleware(request, response, nextCallback);
+  }
+
   void handleRequest() {
     Request request = Request.from(_httpRequest);
     Response response = Response.from(_httpRequest.response);
     request.route = _path;
     request.params = _parseParams(_httpRequest.uri.path, path);
-    if (_middlewares != null) {
-      _middlewares.forEach((middleware) {
-        middleware(request, response, () {
-          if (_middlewares.last == middleware && !response.closed)
-            _finalHandler(request, response);
-        });
-      });
-    }
-  }
 
-  void _finalHandler(Request request, Response response) {
-    callback(request, response);
+    if (_middlewares != null && _middlewares.isNotEmpty) {
+      _runMiddleware(0, request, response);
+    } else {
+      response.send('Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
+    }
   }
 }
