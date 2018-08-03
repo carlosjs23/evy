@@ -80,29 +80,35 @@ class Route {
     return params;
   }
 
+  void _runMiddleware(int index, Request request, Response response) {
+    var middleware = _middlewares[index];
+
+    var nextCallback = () {
+      // If we reached the end obviously don't run the next
+      if (_middlewares.last == middleware) {
+        // But only call the route's handler if the response
+        // has not already been closed by an existing middleware
+        if (!response.closed) {
+          _finalHandler(request, response);
+        }
+
+        return;
+      }
+
+      _runMiddleware(++index, request, response);
+    };
+
+    middleware(request, response, nextCallback);
+  }
+
   void handleRequest() {
     Request request = Request.from(_httpRequest);
     Response response = Response.from(_httpRequest.response);
     request.route = _path;
     request.params = _parseParams(_httpRequest.uri.path, path);
+
     if (_middlewares != null && _middlewares.isNotEmpty) {
-      for (var middleware in _middlewares) {
-        bool shouldContinue = false;
-
-        var nextCallback = () {
-          shouldContinue = true;
-        };
-
-        middleware(request, response, nextCallback);
-
-        if (!shouldContinue) {
-          break;
-        }
-      }
-
-      if (!response.closed) {
-        _finalHandler(request, response);
-      }
+      _runMiddleware(0, request, response);
     }
   }
 
