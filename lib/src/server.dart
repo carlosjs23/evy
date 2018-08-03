@@ -36,17 +36,18 @@ class Evy {
     }
   }
 
-  void get({String path, RouteCallback callback, middlewares}) {
+  void get({path, RouteCallback callback, middlewares}) {
     Route route = _routes.firstWhere(
         (Route _route) => _route.path == path && _route.method == 'GET',
         orElse: () => null);
     if (route == null) {
+      if (middlewares == null) middlewares = List<RouteCallback>();
       Route newRoute = Route('GET', path, callback, middlewares: middlewares);
       _routes.add(newRoute);
     }
   }
 
-  void post({String path, RouteCallback callback, middlewares}) {
+  void post({path, RouteCallback callback, middlewares}) {
     Route route = _routes.firstWhere(
         (Route _route) => _route.path == path && _route.method == 'POST',
         orElse: () => null);
