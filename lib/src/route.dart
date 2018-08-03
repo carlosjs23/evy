@@ -16,9 +16,15 @@ class Route {
   HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback,
-      {List<String> keys, middlewares})
-      : path = _normalize(_path, keys: keys),
-        _middlewares = middlewares;
+      {List<String> keys, middlewares = const []})
+      : path = _normalize(_path, keys: keys) {
+    this._middlewares = middlewares;
+    this._middlewares.add((req, res, next) {
+      if (!res.closed) {
+        this.callback(req, res, next);
+      }
+    });
+  }
 
   bool match(HttpRequest request) {
     _httpRequest = request;
@@ -84,17 +90,6 @@ class Route {
     var middleware = _middlewares[index];
 
     var nextCallback = () {
-      // If we reached the end obviously don't run the next
-      if (_middlewares.last == middleware) {
-        // But only call the route's handler if the response
-        // has not already been closed by an existing middleware
-        if (!response.closed) {
-          _finalHandler(request, response);
-        }
-
-        return;
-      }
-
       _runMiddleware(++index, request, response);
     };
 
@@ -109,10 +104,8 @@ class Route {
 
     if (_middlewares != null && _middlewares.isNotEmpty) {
       _runMiddleware(0, request, response);
+    } else {
+      response.send('Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
     }
-  }
-
-  void _finalHandler(Request request, Response response) {
-    callback(request, response);
   }
 }
