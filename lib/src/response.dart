@@ -45,6 +45,12 @@ class Response {
     _httpResponse.statusCode = statusCode;
   }
 
+  void addHeader(String name, Object value) {
+    _checkResponseClosed();
+
+    _httpResponse.headers.add(name, value);
+  }
+
   static Response from(HttpResponse httpResponse) {
     return Response(httpResponse);
   }
