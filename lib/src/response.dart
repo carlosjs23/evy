@@ -34,6 +34,17 @@ class Response {
     _finish();
   }
 
+
+  void statusCode(int statusCode) {
+    _checkResponseClosed();
+
+    if (statusCode < 100 || statusCode > 600) {
+      throw new Exception('Status code $statusCode invalid: out of range [100, 600]');
+    }
+
+    _httpResponse.statusCode = statusCode;
+  }
+
   static Response from(HttpResponse httpResponse) {
     return Response(httpResponse);
   }
