@@ -4,14 +4,15 @@ import 'package:evy/src/response.dart';
 
 import 'request.dart';
 
-typedef void RouteCallback(Request request, Response response);
+typedef void VoidCallback();
+typedef void RouteCallback(Request request, Response response, VoidCallback next);
 
 class Route {
   final String method;
   final Map path;
   final String _path;
   final callback;
-  List<dynamic> _middlewares;
+  List<RouteCallback> _middlewares;
   HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback,
@@ -84,13 +85,24 @@ class Route {
     Response response = Response.from(_httpRequest.response);
     request.route = _path;
     request.params = _parseParams(_httpRequest.uri.path, path);
-    if (_middlewares != null) {
-      _middlewares.forEach((middleware) {
-        middleware(request, response, () {
-          if (_middlewares.last == middleware && !response.closed)
-            _finalHandler(request, response);
-        });
-      });
+    if (_middlewares != null && _middlewares.isNotEmpty) {
+      for (var middleware in _middlewares) {
+        bool shouldContinue = false;
+
+        var nextCallback = () {
+          shouldContinue = true;
+        };
+
+        middleware(request, response, nextCallback);
+
+        if (!shouldContinue) {
+          break;
+        }
+      }
+
+      if (!response.closed) {
+        _finalHandler(request, response);
+      }
     }
   }
 
