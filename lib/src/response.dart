@@ -35,7 +35,7 @@ class Response {
   }
 
 
-  void statusCode(int statusCode) {
+  void statusCode([int statusCode = HttpStatus.ok]) {
     _checkResponseClosed();
 
     if (statusCode < 100 || statusCode > 600) {
