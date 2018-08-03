@@ -1,18 +1,23 @@
 import 'dart:io';
 
-import 'package:evy/src/request.dart';
+import 'package:evy/src/response.dart';
 
-typedef void RouteCallback(Request request, HttpResponse response);
+import 'request.dart';
+
+typedef void RouteCallback(Request request, Response response);
 
 class Route {
   final String method;
   final Map path;
   final String _path;
   final callback;
+  List<dynamic> _middlewares;
   HttpRequest _httpRequest;
 
-  Route(this.method, this._path, this.callback, {List<String> keys})
-      : path = _normalize(_path, keys: keys);
+  Route(this.method, this._path, this.callback,
+      {List<String> keys, middlewares})
+      : path = _normalize(_path, keys: keys),
+        _middlewares = middlewares;
 
   bool match(HttpRequest request) {
     _httpRequest = request;
@@ -76,12 +81,20 @@ class Route {
 
   void handleRequest() {
     Request request = Request.from(_httpRequest);
+    Response response = Response.from(_httpRequest.response);
     request.route = _path;
     request.params = _parseParams(_httpRequest.uri.path, path);
-    callback(request, _httpRequest.response);
+    if (_middlewares != null) {
+      _middlewares.forEach((middleware) {
+        middleware(request, response, () {
+          if (_middlewares.last == middleware && !response.closed)
+            _finalHandler(request, response);
+        });
+      });
+    }
   }
 
-  void next() {
-    handleRequest();
+  void _finalHandler(Request request, Response response) {
+    callback(request, response);
   }
 }

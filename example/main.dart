@@ -1,14 +1,9 @@
-import 'dart:io';
 import 'package:evy/evy.dart';
 
 void main() {
   var app = Evy();
 
-  app.get(path: '/greet/:name', callback: sayHello);
-
-  app.post(path: '/greet/', callback: sayHello);
-
-  app.get(path: '/greet/:name/beatiful/:question', callback: sayHelloBeatiful);
+  app.get(path: '/greet/:name', callback: sayHello, middlewares: [checkName, changeName]);
 
   app.listen(port: 3000, callback: (error) {
     if (error != null) {
@@ -19,18 +14,20 @@ void main() {
   });
 }
 
-void sayHello(Request req, HttpResponse res) {
-  if (req.method != 'POST') {
-    res.write('Hello ${req.params['name']}');
-  }
-  res.close();
+void sayHello(Request req, Response res) {
+  res.send('Hello ${req.params['name']}');
 }
 
-void sayHelloBeatiful(Request req, HttpResponse res) {
-  if (req.params['question'] == 'yes') {
-    res.write('Hello ${req.params['name']} you are a pro');
-  } else {
-    res.write('Hello ${req.params['name']}');
+void checkName(Request req, Response res, next) {
+  if (req.params['name'] != 'Alberto') {
+    res.send('Only Alberto is allowed to use this action');
   }
-  res.close();
+  next();
+}
+
+void changeName(Request req, Response res, next) {
+  if (req.params['name'] == 'Alberto') {
+    req.params['name'] = 'Carlos';
+  }
+  next();
 }

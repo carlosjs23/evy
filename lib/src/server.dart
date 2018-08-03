@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:evy/src/route.dart';
+import 'route.dart';
 
 typedef Function VoidCallback(Object error);
 
@@ -36,22 +36,22 @@ class Evy {
     }
   }
 
-  void get({String path, RouteCallback callback}) {
+  void get({String path, RouteCallback callback, middlewares}) {
     Route route = _routes.firstWhere(
         (Route _route) => _route.path == path && _route.method == 'GET',
         orElse: () => null);
     if (route == null) {
-      Route newRoute = Route('GET', path, callback);
+      Route newRoute = Route('GET', path, callback, middlewares: middlewares);
       _routes.add(newRoute);
     }
   }
 
-  void post({String path, RouteCallback callback}) {
+  void post({String path, RouteCallback callback, middlewares}) {
     Route route = _routes.firstWhere(
         (Route _route) => _route.path == path && _route.method == 'POST',
         orElse: () => null);
     if (route == null) {
-      Route newRoute = Route('POST', path, callback);
+      Route newRoute = Route('POST', path, callback, middlewares: middlewares);
       _routes.add(newRoute);
     }
   }

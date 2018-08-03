@@ -1,8 +1,10 @@
 # Evy
 
+[![Gitter chat](https://badges.gitter.im/carlosjs23/Evy.png)](https://gitter.im/evy-dart/evy)
+
 Evy is a Dart 2 Web Framework, with an ExpressJS like API.
 
-*Note: At the moment the API is unfinished and it's just a proof of concept.*
+*Note: At the moment the API is unfinished and it's just a proof of concept (thats why it's not yet published to Dart Packages).*
 
 ## Getting Started
 
@@ -25,44 +27,50 @@ dependencies:
 ## Example code
  
 ```dart
-import 'dart:io';
 import 'package:evy/evy.dart';
 
 void main() {
   var app = Evy();
-  
-  app.get(path: '/greet/:name', callback: sayHello);
 
-  app.get(path: '/greet/:name/beatiful/:question', callback: sayHelloBeatiful);
-  
+  app.get(path: '/greet/:name', callback: sayHello, middlewares: [checkName, changeName]);
+
   app.listen(port: 3000, callback: (error) {
     if (error != null) {
-      print('An error has ocurred: ${error}');
+      print(error);
     } else {
       print('Server listening on port 3000');
     }
   });
 }
 
-void sayHello(Request req, HttpResponse res) {
-  res.write('Hello ${req.params['name']}');
-  res.close();
+void sayHello(Request req, Response res) {
+  res.send('Hello ${req.params['name']}');
 }
 
-void sayHelloBeatiful(Request req, HttpResponse res) {
-  if (req.params['question'] == 'yes') {
-    res.write('Hello ${req.params['name']} you are a pro');
-  } else {
-    res.write('Hello ${req.params['name']}');
+void checkName(Request req, Response res, next) {
+  if (req.params['name'] != 'Alberto') {
+    res.send('Only Alberto is allowed to use this action');
   }
-  res.close();
+  next();
+}
+
+void changeName(Request req, Response res, next) {
+  if (req.params['name'] == 'Alberto') {
+    req.params['name'] = 'Carlos';
+  }
+  next();
 }
 ```
 
-### Todo:
+### Todo
  - [ ] Implement basic HTTP methods (~~POST~~, PUT, etc).
- - [ ] Create ~~Request~~ and Response wrappers.
+ - [X] Create Request and Response wrappers(Partially done).
  - [ ] Serve static files.
- - [ ] Middlewares.
+ - [X] Per Route Middlewares.
+ - [ ] Global Middlewares.
  - [ ] Content body parsing.
+ - [ ] Routes group.
+ - [ ] Publish package to Dart Packages.
+ - [ ] Testing.
+ - [ ] Logo design.
  
