@@ -11,7 +11,7 @@ class Route {
   final Map path;
   final dynamic _path;
   final RouteCallback callback;
-  List<RouteCallback> _middlewares = List<RouteCallback>();
+  List<RouteCallback> _middlewares;
   HttpRequest _httpRequest;
 
   Route(this.method, this._path, this.callback,
