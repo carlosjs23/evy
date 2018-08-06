@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:evy/src/middleware.dart';
+import 'package:evy/src/route.dart';
 import 'package:evy/src/router.dart';
 
 typedef Function VoidCallback(Object error);
@@ -32,8 +33,15 @@ class Evy {
   void use({dynamic path, Callback callback, Router router}) {
     if (router != null) {
       _router = router;
+    } else if (callback != null){
+      _router.use(path: path, callback: callback);
+    } else {
+      throw Exception('Please register either middleware or a router');
     }
-    _router.use(path: path, callback: callback);
+  }
+
+  Route route(dynamic path) {
+    return _router.route(path);
   }
 
 }

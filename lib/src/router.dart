@@ -20,9 +20,9 @@ class Router {
     _checkPath(path);
     Route route = Route(path);
 
-    Middleware middleware = Middleware(path: path);
+    Middleware middleware = Middleware(path: path, callback: route.dispatch);
     middleware.route = route;
-    
+
     _stack.add(middleware);
     return route;
   }
@@ -44,6 +44,64 @@ class Router {
     Request request = Request.from(httpRequest);
     Response response = Response(httpRequest.response);
 
+    int index = 0;
+
+    var next = () {
+      if (index >= _stack.length) {
+        return;
+      }
+
+      String path = request.path;
+
+      if (path == null) {
+        return;
+      }
+
+      Middleware middleware;
+      Route route;
+      bool match = false;
+
+      while (!match && index < _stack.length) {
+        middleware = _stack[index++];
+        route = middleware.route;
+        match = middleware.match(path);
+
+        if (!match) {
+          continue;
+        }
+
+        if (route == null) {
+          continue;
+        }
+
+        String method = request.method;
+        bool hasMethod = route.methods.contains(method);
+
+        if (!hasMethod) {
+          match = false;
+          continue;
+        }
+      }
+
+      if (!match) {
+        return;
+      }
+
+      if (route != null) {
+        request.route = route;
+      }
+
+      request.params = middleware.params;
+
+      if (route != null) {
+        middleware.handleRequest(request, response, () {});
+      } else {
+        middleware.handleRequest(request, response, () {});
+      }
+
+    };
+
+    next();
   }
 
 }

@@ -10,13 +10,12 @@ typedef void RouteCallback(Request request, Response response, void next);
 class Route {
   final Map path;
   final dynamic _path;
-  List<dynamic> methods;
+  List<String> methods = List<String>();
   HttpRequest _httpRequest;
   List<Middleware> _stack = List<Middleware>();
 
 
-  Route(this._path, {List<String> keys, List<RouteCallback> middlewares})
-      : path = _normalize(_path, keys: keys);
+  Route(this._path, {List<String> keys, List<RouteCallback> middlewares});
 
   bool match(HttpRequest request) {
     _httpRequest = request;
@@ -77,25 +76,40 @@ class Route {
     return params;
   }
 
-  void runMiddleware(int index, Request request, Response response) {
+  void _runMiddleware(int index, Request request, Response response) {
     Middleware middleware = _stack[index];
-
-    if (middleware == null) {
-      print('MIDDLEWARE NULL');
-    }
 
     request.route = this;
 
     var nextCallback = () {
-      runMiddleware(++index, request, response);
+      _runMiddleware(++index, request, response);
     };
 
     middleware.handleRequest(request, response, nextCallback);
   }
 
+  void dispatch(Request request, Response response, finish) {
+    int index = 0;
+    if (_stack.length == 0) {
+      return;
+    }
+
+    request.route = this;
+    _runMiddleware(index, request, response);
+  }
+
   Route get(Callback callback) {
     Middleware middleware = Middleware(method: 'GET', callback: callback);
+    methods.add('GET');
     _stack.add(middleware);
+    return this;
+  }
+
+  Route post(Callback callback) {
+    Middleware middleware = Middleware(method: 'POST', callback: callback);
+    methods.add('POST');
+    _stack.add(middleware);
+    return this;
   }
 
 /*  void handleRequest() {
