@@ -7,30 +7,55 @@ class Middleware {
   final dynamic path;
   final Callback callback;
   final String method;
-  Route route;
   Map params;
-
-  Middleware({this.path, this.callback, this.method});
+  Route route;
+  Map _pathRegexp;
+  Middleware({this.path, this.callback, this.method}) {
+    if (path != '*' && path != '/') {
+      _pathRegexp = _normalize(path);
+    }
+  }
 
   void handleRequest(Request request, Response response, void next) {
     callback(request, response, next);
   }
 
   bool match(dynamic path) {
-    var match;
+    bool match;
     if (path != null) {
-      match = _normalize(path);
+      if (this.path == '*') {
+        return true;
+      }
+
+      if (this.path == '/') {
+        return true;
+      }
+      match = _pathRegexp['regexp'].hasMatch(path);
     }
 
-    if (match == null) {
+    if (!match) {
       return false;
     }
 
-    if ((match['regexp'] as RegExp).hasMatch(path)) {
-      return true;
-    }
+    params = _parseParams(path, _pathRegexp);
 
-    return false;
+    return true;
+  }
+
+  Map _parseParams(String path, Map routePath) {
+    var params = {};
+    Match paramsMatch = routePath['regexp'].firstMatch(path);
+    for (var i = 0; i < routePath['keys'].length; i++) {
+      String param;
+      try {
+        param = Uri.decodeQueryComponent(paramsMatch[i + 1]);
+      } catch (e) {
+        param = paramsMatch[i + 1];
+      }
+
+      params[routePath['keys'][i]] = param;
+    }
+    return params;
   }
 
   static Map _normalize(dynamic path, {List<String> keys, bool strict: false}) {
@@ -67,23 +92,6 @@ class Middleware {
 
       return replace.toString();
     }).replaceAll('//', '/');
-    print({'regexp': new RegExp('^$path\$'), 'keys': keys});
     return {'regexp': new RegExp('^$path\$'), 'keys': keys};
-  }
-
-  Map _parseParams(String path, Map routePath) {
-    var params = {};
-    Match paramsMatch = routePath['regexp'].firstMatch(path);
-    for (var i = 0; i < routePath['keys'].length; i++) {
-      String param;
-      try {
-        param = Uri.decodeQueryComponent(paramsMatch[i + 1]);
-      } catch (e) {
-        param = paramsMatch[i + 1];
-      }
-
-      params[routePath['keys'][i]] = param;
-    }
-    return params;
   }
 }

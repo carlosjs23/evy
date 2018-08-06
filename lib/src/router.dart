@@ -6,14 +6,18 @@ import 'package:evy/src/response.dart';
 
 import 'route.dart';
 
-
 class Router {
   List<Middleware> _stack = List<Middleware>();
 
-  void use({dynamic path, Callback callback}) {
-    _checkPathIsValid(path);
-    Middleware middleware = Middleware(path: path, callback: callback);
-    _stack.add(middleware);
+  void handle(HttpRequest httpRequest) {
+    Request request = Request.from(httpRequest);
+    Response response = Response(httpRequest.response);
+
+    if (_stack.length == 0) {
+      return;
+    }
+
+    _runMiddleware(0, request, response);
   }
 
   Route route(dynamic path) {
@@ -24,13 +28,14 @@ class Router {
     middleware.route = route;
 
     _stack.add(middleware);
+    print('Router stack: ${_stack.length}');
     return route;
   }
 
-  void _checkPathIsValid(path) {
-    if (path != null && path is! RegExp && path is! String && path is! List<String>) {
-      throw Exception('Path should be a RegExp or String or List<String>');
-    }
+  void use({dynamic path, Callback callback}) {
+    _checkPathIsValid(path);
+    Middleware middleware = Middleware(path: path, callback: callback);
+    _stack.add(middleware);
   }
 
   void _checkPath(path) {
@@ -40,68 +45,57 @@ class Router {
     _checkPathIsValid(path);
   }
 
-  void handle(HttpRequest httpRequest) {
-    Request request = Request.from(httpRequest);
-    Response response = Response(httpRequest.response);
-
-    int index = 0;
-
-    var next = () {
-      if (index >= _stack.length) {
-        return;
-      }
-
-      String path = request.path;
-
-      if (path == null) {
-        return;
-      }
-
-      Middleware middleware;
-      Route route;
-      bool match = false;
-
-      while (!match && index < _stack.length) {
-        middleware = _stack[index++];
-        route = middleware.route;
-        match = middleware.match(path);
-
-        if (!match) {
-          continue;
-        }
-
-        if (route == null) {
-          continue;
-        }
-
-        String method = request.method;
-        bool hasMethod = route.methods.contains(method);
-
-        if (!hasMethod) {
-          match = false;
-          continue;
-        }
-      }
-
-      if (!match) {
-        return;
-      }
-
-      if (route != null) {
-        request.route = route;
-      }
-
-      request.params = middleware.params;
-
-      if (route != null) {
-        middleware.handleRequest(request, response, () {});
-      } else {
-        middleware.handleRequest(request, response, () {});
-      }
-
-    };
-
-    next();
+  void _checkPathIsValid(path) {
+    if (path != null &&
+        path is! RegExp &&
+        path is! String &&
+        path is! List<String>) {
+      throw Exception('Path should be a RegExp or String or List<String>');
+    }
   }
 
+  void _runMiddleware(int index, Request request, Response response) {
+    var nextCallback = () {
+      _runMiddleware(++index, request, response);
+    };
+
+    var finish = () {
+      print('FINISH CALLED');
+    };
+
+    if (index >= _stack.length) {
+      return finish();
+    }
+    String path = request.path;
+
+    if (path == null) {
+      return finish();
+    }
+
+    Middleware middleware = _stack[index];
+    Route route = middleware.route;
+    bool match = middleware.match(path);
+
+    if (!match) {
+      return nextCallback();
+    }
+
+    request.params = middleware.params;
+
+    if (route == null) {
+      return middleware.handleRequest(request, response, nextCallback);
+    }
+
+    if (route != null) {
+      String method = request.method;
+      bool hasMethod = route.methods.contains(method);
+
+      if (!hasMethod) {
+        return nextCallback();
+      }
+
+      request.route = route;
+      route.dispatch(request, response, finish);
+    }
+  }
 }

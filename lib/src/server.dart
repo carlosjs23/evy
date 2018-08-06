@@ -26,22 +26,21 @@ class Evy {
     }
   }
 
-  void _handleRequest(HttpRequest httpRequest) {
-    _router.handle(httpRequest);
+  Route route(dynamic path) {
+    return _router.route(path);
   }
 
   void use({dynamic path, Callback callback, Router router}) {
     if (router != null) {
       _router = router;
-    } else if (callback != null){
+    } else if (callback != null) {
       _router.use(path: path, callback: callback);
     } else {
       throw Exception('Please register either middleware or a router');
     }
   }
 
-  Route route(dynamic path) {
-    return _router.route(path);
+  void _handleRequest(HttpRequest httpRequest) {
+    _router.handle(httpRequest);
   }
-
 }

@@ -4,13 +4,11 @@ void main() {
   var app = Evy();
   var router = Router();
 
-  //router.route('*').get(sayHello);
-
   app.use(router: router);
 
   app.use(path: '*', callback: alwaysClose);
 
-  //router.route('/greet/:name').get(sayHello).post(sayHello);
+  router.route('/greet/:name').get(sayHello);
 
   app.listen(
       port: 3000,
@@ -23,13 +21,15 @@ void main() {
       });
 }
 
-void sayHello(Request req, Response res, next) {
-  print(req.path);
-  res.send('Hello');
+void alwaysClose(Request req, Response res, next) {
+  next();
 }
 
-void alwaysClose(Request req, Response res, next) {
-  res.send('CLOSED');
+void changeName(Request req, Response res, next) {
+  if (req.params['name'] == 'Alberto') {
+    req.params['name'] = 'Carlos';
+  }
+  next();
 }
 
 void checkName(Request req, Response res, next) {
@@ -40,9 +40,10 @@ void checkName(Request req, Response res, next) {
   }
 }
 
-void changeName(Request req, Response res, next) {
-  if (req.params['name'] == 'Alberto') {
-    req.params['name'] = 'Carlos';
-  }
+void sayBye(Request req, Response res, next) {
+  res.send('Bye');
+}
+
+void sayHello(Request req, Response res, next) {
   next();
 }
