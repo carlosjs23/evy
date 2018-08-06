@@ -2,15 +2,11 @@ import 'package:evy/evy.dart';
 
 void main() {
   var app = Evy();
+  var router = Router();
 
-  //Routes can have a callback and one or more middlewares.
-  app.get(path: '/greet/:name', callback: sayHello, middlewares: [checkName, changeName]);
+  app.use(router: router);
 
-  //Path can be a RegExp, ie this route match /evy, /evyhi, /whateverevy, etc.
-  app.get(path: RegExp('/.*evy'), callback: sayHello);
-
-  //Path can be too a List of Strings,  this will match /users, /user and /client.
-  app.get(path: ['/users', '/user', '/client'], callback: sayHello);
+  router.route('/greet/:name').get(sayHello);
 
   app.listen(port: 3000, callback: (error) {
     if (error != null) {

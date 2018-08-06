@@ -1,11 +1,12 @@
 import 'dart:io';
 
+import 'package:evy/src/route.dart';
+
 class Request {
   HttpRequest _httpRequest;
   Map params;
 
-  // The route can be an RegExp, a List or an String
-  dynamic route;
+  Route route;
 
   // TODO: Implement body parser.
   Map body;

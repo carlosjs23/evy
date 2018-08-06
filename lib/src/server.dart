@@ -1,12 +1,13 @@
 import 'dart:io';
 
-import 'route.dart';
+import 'package:evy/src/middleware.dart';
+import 'package:evy/src/router.dart';
 
 typedef Function VoidCallback(Object error);
 
 class Evy {
   HttpServer _server;
-  List<Route> _routes = List<Route>();
+  Router _router = Router();
 
   void listen(
       {String host: 'localhost', int port: 9710, VoidCallback callback}) async {
@@ -24,37 +25,15 @@ class Evy {
     }
   }
 
-  void _handleRequest(HttpRequest request) {
-    Route route = _routes.firstWhere((Route _route) => _route.match(request),
-        orElse: () => null);
-    if (route != null) {
-      route.handleRequest();
-    } else {
-      request.response.statusCode = HttpStatus.notFound;
-      request.response.write('404 Not Found');
-      request.response.close();
+  void _handleRequest(HttpRequest httpRequest) {
+    _router.handle(httpRequest);
+  }
+
+  void use({dynamic path, Callback callback, Router router}) {
+    if (router != null) {
+      _router = router;
     }
+    _router.use(path: path, callback: callback);
   }
 
-  void get({path, RouteCallback callback, middlewares}) {
-    _checkPathIsValid(path);
-    if (middlewares == null) middlewares = List<RouteCallback>();
-    Route newRoute = Route('GET', path, callback, middlewares: middlewares);
-    _routes.add(newRoute);
-  }
-
-  void post({path, RouteCallback callback, middlewares}) {
-    _checkPathIsValid(path);
-    if (middlewares == null) middlewares = List<RouteCallback>();
-    Route newRoute = Route('POST', path, callback, middlewares: middlewares);
-    _routes.add(newRoute);
-  }
-
-  void _checkPathIsValid(path) {
-    if (path == null) {
-      throw Exception('Can\'t add a route without a path');
-    } else if (path is! RegExp && path is! String && path is! List<String>) {
-      throw Exception('Path should be a RegExp or String or List<String>');
-    }
-  }
 }

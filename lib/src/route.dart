@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:evy/src/middleware.dart';
 import 'package:evy/src/response.dart';
 
 import 'request.dart';
@@ -7,28 +8,19 @@ import 'request.dart';
 typedef void RouteCallback(Request request, Response response, void next);
 
 class Route {
-  final String method;
   final Map path;
   final dynamic _path;
-  final RouteCallback callback;
-  List<RouteCallback> _middlewares;
+  List<dynamic> methods;
   HttpRequest _httpRequest;
+  List<Middleware> _stack = List<Middleware>();
 
-  Route(this.method, this._path, this.callback,
-      {List<String> keys, List<RouteCallback> middlewares})
-      : path = _normalize(_path, keys: keys) {
-    this._middlewares = middlewares;
-    this._middlewares.add((req, res, next) {
-      if (!res.closed) {
-        this.callback(req, res, next);
-      }
-    });
-  }
+
+  Route(this._path, {List<String> keys, List<RouteCallback> middlewares})
+      : path = _normalize(_path, keys: keys);
 
   bool match(HttpRequest request) {
     _httpRequest = request;
-    return (method == request.method &&
-        (path['regexp'] as RegExp).hasMatch(request.uri.path));
+    return ((path['regexp'] as RegExp).hasMatch(request.uri.path));
   }
 
   static Map _normalize(dynamic path, {List<String> keys, bool strict: false}) {
@@ -85,20 +77,31 @@ class Route {
     return params;
   }
 
-  void _runMiddleware(int index, Request request, Response response) {
-    var middleware = _middlewares[index];
+  void runMiddleware(int index, Request request, Response response) {
+    Middleware middleware = _stack[index];
+
+    if (middleware == null) {
+      print('MIDDLEWARE NULL');
+    }
+
+    request.route = this;
 
     var nextCallback = () {
-      _runMiddleware(++index, request, response);
+      runMiddleware(++index, request, response);
     };
 
-    middleware(request, response, nextCallback);
+    middleware.handleRequest(request, response, nextCallback);
   }
 
-  void handleRequest() {
+  Route get(Callback callback) {
+    Middleware middleware = Middleware(method: 'GET', callback: callback);
+    _stack.add(middleware);
+  }
+
+/*  void handleRequest() {
     Request request = Request.from(_httpRequest);
     Response response = Response.from(_httpRequest.response);
-    request.route = _path;
+    //request.route = _path;
     request.params = _parseParams(_httpRequest.uri.path, path);
 
     if (_middlewares != null && _middlewares.isNotEmpty) {
@@ -107,5 +110,5 @@ class Route {
       response.send(
           'Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
     }
-  }
+  }*/
 }
