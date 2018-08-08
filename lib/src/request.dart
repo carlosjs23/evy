@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:evy/src/route.dart';
 
+/// Wrapper around the [HttpRequest] class for convenience.
 class Request {
   HttpRequest _httpRequest;
   Map params;

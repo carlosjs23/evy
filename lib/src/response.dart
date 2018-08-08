@@ -1,5 +1,6 @@
 import 'dart:io';
 
+/// Wrapper around the [HttpResponse] class for convenience.
 class Response {
   HttpResponse _httpResponse;
   bool _closed = false;
@@ -36,8 +37,8 @@ class Response {
   /// This method will throw an exception when called if the response has already
   /// been closed. Call this before running all methods where the request is
   /// being modified, because the exception will bubble up.
-  /// It may be a good idea in the future to create new exception classes extending
-  /// Exception so they can be caught separately or used with `is`
+  ///
+  /// TODO: Create new exception classes extending Exception.
   void _checkResponseClosed() {
     if (closed) {
       throw new Exception(
@@ -45,7 +46,7 @@ class Response {
     }
   }
 
-  /// Call this when the http response is done being modified, and should
+  /// Call this when the [HttpResponse] is done being modified, and should
   /// be closed.
   void _finish() {
     _httpResponse.close();
