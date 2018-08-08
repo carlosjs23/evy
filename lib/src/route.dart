@@ -3,24 +3,27 @@ import 'package:evy/src/response.dart';
 
 import 'request.dart';
 
-typedef void RouteCallback(Request request, Response response, void next);
-
+/// The core component responsible for handle route's methods.
 class Route {
   final dynamic _path;
   List<String> methods = List<String>();
   List<Middleware> _stack = List<Middleware>();
 
-  Route(this._path, {List<String> keys, List<RouteCallback> middlewares});
+  Route(this._path);
 
+  /// Start route's stack iteration.
   void dispatch(Request request, Response response, finish) {
-    int index = 0;
     if (_stack.length == 0) {
-      finish();
+      return finish();
     }
+
+    int index = 0;
 
     _runMiddleware(index, request, response);
   }
 
+  /// Adds a GET method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
   Route get(Callback callback) {
     Middleware middleware =
         Middleware(path: '/', method: 'GET', callback: callback);
@@ -29,6 +32,8 @@ class Route {
     return this;
   }
 
+  /// Adds a POST method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
   Route post(Callback callback) {
     Middleware middleware =
         Middleware(path: '/', method: 'POST', callback: callback);
@@ -37,7 +42,18 @@ class Route {
     return this;
   }
 
+  /// Iterates through the route's stack trying to match
+  /// the incoming request method with each route's method.
+  ///
+  /// If it match, the callback for the [Route] stored
+  /// in the [Middleware] will be called.
   void _runMiddleware(int index, Request request, Response response) {
+    /// Defines the next() callback for call it later.
+    /// It allows to pass to the next callback when various callbacks are chained.
+    ///
+    /// ```
+    ///  app.route('/greet/:name').get(sayHello).get(storeResult);
+    /// ```
     var nextCallback = () {
       _runMiddleware(++index, request, response);
     };
