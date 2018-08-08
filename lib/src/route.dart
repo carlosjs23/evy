@@ -23,7 +23,7 @@ class Route {
 
   Route get(Callback callback) {
     Middleware middleware =
-        Middleware(path: '/', method: 'GET', callback: callback);
+        Middleware(path: '/', callback: callback);
     methods.add('GET');
     _stack.add(middleware);
     return this;
@@ -31,7 +31,7 @@ class Route {
 
   Route post(Callback callback) {
     Middleware middleware =
-        Middleware(path: '/', method: 'POST', callback: callback);
+        Middleware(path: '/', callback: callback);
     methods.add('POST');
     _stack.add(middleware);
     return this;
