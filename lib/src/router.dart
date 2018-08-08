@@ -13,12 +13,12 @@ class Router {
 
   /// Pass every request coming from the app to start processing it.
   void handle(HttpRequest httpRequest) {
-    Request request = Request.from(httpRequest);
-    Response response = Response(httpRequest.response);
-
     if (_stack.length == 0) {
       return;
     }
+
+    Request request = Request.from(httpRequest);
+    Response response = Response(httpRequest.response);
 
     _runMiddleware(0, request, response);
   }
