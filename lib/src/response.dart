@@ -4,6 +4,7 @@ import 'dart:io';
 class Response {
   HttpResponse _httpResponse;
   bool _closed = false;
+
   Response([HttpResponse existingResponse]) {
     this._httpResponse = existingResponse;
   }

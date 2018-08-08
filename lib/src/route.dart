@@ -7,7 +7,7 @@ import 'request.dart';
 class Route {
   final dynamic _path;
   List<String> methods = List<String>();
-  List<Middleware> _stack = List<Middleware>();
+  final List<Middleware> _stack = List<Middleware>();
 
   Route(this._path);
 
@@ -25,8 +25,7 @@ class Route {
   /// Adds a GET method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
   Route get(Callback callback) {
-    Middleware middleware =
-        Middleware(path: '/', callback: callback);
+    Middleware middleware = Middleware(path: '/', callback: callback);
     methods.add('GET');
     _stack.add(middleware);
     return this;
@@ -35,8 +34,7 @@ class Route {
   /// Adds a POST method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
   Route post(Callback callback) {
-    Middleware middleware =
-        Middleware(path: '/', callback: callback);
+    Middleware middleware = Middleware(path: '/', callback: callback);
     methods.add('POST');
     _stack.add(middleware);
     return this;

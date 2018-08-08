@@ -17,6 +17,7 @@ class Middleware {
       _pathRegexp = _normalize(path);
     }
   }
+
   /// Calls the respective callback for this middleware.
   void handleRequest(Request request, Response response, void next) {
     callback(request, response, next);
