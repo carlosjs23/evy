@@ -38,7 +38,6 @@ class Router {
     middleware.route = route;
 
     _stack.add(middleware);
-    print('Router stack: ${_stack.length}');
     return route;
   }
 
@@ -90,6 +89,7 @@ class Router {
       _runMiddleware(++index, request, response);
     };
 
+    /// TODO: Implement a logger for internal usage.
     var finish = () {
       print('FINISH CALLED');
     };
