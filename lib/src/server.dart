@@ -8,10 +8,16 @@ import 'package:evy/src/router.dart';
 typedef Function VoidCallback(Object error);
 
 /// The Evy Application.
-/// TODO: Lazy router initialization.
 class Evy {
   HttpServer _server;
-  Router _router;
+
+  /// TODO: Lazy router initialization.
+  Router _router = Router();
+
+  /// Serves as proxy to the [Router] get method.
+  Route get({dynamic path, Callback callback}) {
+    return _router.get(path: path, callback: callback);
+  }
 
   /// Starts a [HttpServer] defaulting localhost:9710 or
   /// at the user defined address:port.
@@ -31,6 +37,11 @@ class Evy {
       if (callback != null) callback(error);
       throw error;
     }
+  }
+
+  /// Serves as proxy to the [Router] post method.
+  Route post({dynamic path, Callback callback}) {
+    return _router.post(path: path, callback: callback);
   }
 
   /// Serves as proxy to the [Router] route method.

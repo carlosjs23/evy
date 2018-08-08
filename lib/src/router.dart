@@ -9,7 +9,12 @@ import 'route.dart';
 /// The core component responsible for maintaining the middleware stack
 /// and handle the requests that comes from the app.
 class Router {
-  List<Middleware> _stack = List<Middleware>();
+  final List<Middleware> _stack = List<Middleware>();
+
+  Route get({dynamic path, Callback callback}) {
+    Route _route = route(path).get(callback);
+    return _route;
+  }
 
   /// Pass every request coming from the app to start processing it.
   void handle(HttpRequest httpRequest) {
@@ -21,6 +26,11 @@ class Router {
     Response response = Response(httpRequest.response);
 
     _runMiddleware(0, request, response);
+  }
+
+  Route post({dynamic path, Callback callback}) {
+    Route _route = route(path).get(callback);
+    return _route;
   }
 
   /// Adds a [Route] to the middleware stack and returns it to allow chaining
