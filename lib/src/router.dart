@@ -122,7 +122,9 @@ class Router {
       return nextCallback();
     }
 
-    request.params = middleware.params;
+    if (request.params == null) {
+      request.params = middleware.params;
+    }
 
     /// It's a middleware so call it's callback.
     if (route == null) {

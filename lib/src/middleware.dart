@@ -28,6 +28,7 @@ class Middleware {
     bool match;
     if (path != null) {
       if (this.path == '*') {
+        params = {0: Uri.decodeComponent(path)};
         return true;
       }
 
