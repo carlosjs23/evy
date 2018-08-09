@@ -122,6 +122,7 @@ class Router {
       return nextCallback();
     }
 
+    /// TODO: Merge params.
     if (request.params == null) {
       request.params = middleware.params;
     }

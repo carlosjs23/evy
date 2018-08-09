@@ -28,7 +28,8 @@ class Middleware {
     bool match;
     if (path != null) {
       if (this.path == '*') {
-        params = {0: Uri.decodeComponent(path)};
+        /// DISABLED UNTIL WE IMPLEMENT MERGE PARAMS.
+        /// params = {0: Uri.decodeComponent(path)};
         return true;
       }
 
