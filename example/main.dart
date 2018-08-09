@@ -3,7 +3,10 @@ import 'package:evy/evy.dart';
 void main() {
   var app = Evy();
 
-  /// This middleware will be called only for '/greet/:name' routes
+  /// This middleware will match all routes.
+  app.use(path: '*', callback: logRequest );
+
+  /// This middleware will be called only for '/greet/:name' routes.
   app.use(path: '/greet/:name', callback: checkName);
 
   /// This middleware will be called only for '/greet/:name' routes.
@@ -48,5 +51,11 @@ void changeName(Request req, Response res, next) {
   if (req.params['name'] == 'Alberto') {
     req.params['name'] = 'Carlos';
   }
+  next();
+}
+
+void logRequest(Request req, Response res, next) {
+  /// Do your logging stuff and then call next()
+  print('${req.ip} - - [${DateTime.now()}] "${req.method} ${req.originalUrl}"');
   next();
 }
