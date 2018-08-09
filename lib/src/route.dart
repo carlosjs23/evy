@@ -1,111 +1,77 @@
-import 'dart:io';
-
+import 'package:evy/src/middleware.dart';
 import 'package:evy/src/response.dart';
 
 import 'request.dart';
 
-typedef void RouteCallback(Request request, Response response, void next);
-
+/// The core component responsible for handle route's methods.
 class Route {
-  final String method;
-  final Map path;
   final dynamic _path;
-  final RouteCallback callback;
-  List<RouteCallback> _middlewares;
-  HttpRequest _httpRequest;
+  List<String> methods = List<String>();
+  final List<Middleware> _stack = List<Middleware>();
 
-  Route(this.method, this._path, this.callback,
-      {List<String> keys, List<RouteCallback> middlewares})
-      : path = _normalize(_path, keys: keys) {
-    this._middlewares = middlewares;
-    this._middlewares.add((req, res, next) {
-      if (!res.closed) {
-        this.callback(req, res, next);
-      }
-    });
+  Route(this._path);
+
+  /// Start route's stack iteration.
+  void dispatch(Request request, Response response, finish) {
+    if (_stack.length == 0) {
+      return finish();
+    }
+
+    int index = 0;
+
+    _runMiddleware(index, request, response);
   }
 
-  bool match(HttpRequest request) {
-    _httpRequest = request;
-    return (method == request.method &&
-        (path['regexp'] as RegExp).hasMatch(request.uri.path));
+  /// Adds a GET method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
+  Route get(Callback callback) {
+    Middleware middleware = Middleware(path: '/', callback: callback);
+    methods.add('GET');
+    _stack.add(middleware);
+    return this;
   }
 
-  static Map _normalize(dynamic path, {List<String> keys, bool strict: false}) {
-    if (keys == null) {
-      keys = [];
-    }
-
-    if (path is RegExp) {
-      return {'regexp': path, 'keys': keys};
-    }
-    if (path is List) {
-      path = '(${path.join('|')})';
-    }
-
-    if (!strict) {
-      path += '/?';
-    }
-
-    path = path.replaceAllMapped(new RegExp(r'(\.)?:(\w+)(\?)?'),
-        (Match placeholder) {
-      var replace = new StringBuffer('(?:');
-
-      if (placeholder[1] != null) {
-        replace.write('\.');
-      }
-
-      replace.write('([\\w%+-._~!\$&\'()*,;=:@]+))');
-
-      if (placeholder[3] != null) {
-        replace.write('?');
-      }
-
-      keys.add(placeholder[2]);
-
-      return replace.toString();
-    }).replaceAll('//', '/');
-
-    return {'regexp': new RegExp('^$path\$'), 'keys': keys};
+  /// Adds a POST method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
+  Route post(Callback callback) {
+    Middleware middleware = Middleware(path: '/', callback: callback);
+    methods.add('POST');
+    _stack.add(middleware);
+    return this;
   }
 
-  Map _parseParams(String path, Map routePath) {
-    var params = {};
-    Match paramsMatch = routePath['regexp'].firstMatch(path);
-    for (var i = 0; i < routePath['keys'].length; i++) {
-      String param;
-      try {
-        param = Uri.decodeQueryComponent(paramsMatch[i + 1]);
-      } catch (e) {
-        param = paramsMatch[i + 1];
-      }
-
-      params[routePath['keys'][i]] = param;
-    }
-    return params;
-  }
-
+  /// Iterates through the route's stack trying to match
+  /// the incoming request method with each route's method.
+  ///
+  /// If it match, the callback for the [Route] stored
+  /// in the [Middleware] will be called.
   void _runMiddleware(int index, Request request, Response response) {
-    var middleware = _middlewares[index];
-
+    /// Defines the next() callback for call it later.
+    /// It allows to pass to the next callback when various callbacks are chained.
+    ///
+    /// ```
+    ///  app.route('/greet/:name').get(sayHello).get(storeResult);
+    /// ```
     var nextCallback = () {
       _runMiddleware(++index, request, response);
     };
 
-    middleware(request, response, nextCallback);
-  }
+    var finish = () {
+      print('FINISH CALLED');
+    };
 
-  void handleRequest() {
-    Request request = Request.from(_httpRequest);
-    Response response = Response.from(_httpRequest.response);
-    request.route = _path;
-    request.params = _parseParams(_httpRequest.uri.path, path);
-
-    if (_middlewares != null && _middlewares.isNotEmpty) {
-      _runMiddleware(0, request, response);
-    } else {
-      response.send(
-          'Cannot ${request.method.toUpperCase()} ${_httpRequest.uri.path}');
+    if (index >= _stack.length) {
+      return finish();
     }
+
+    Middleware middleware = _stack[index];
+
+    request.route = this;
+
+    if (!methods.contains(request.method)) {
+      return finish();
+    }
+
+    middleware.handleRequest(request, response, nextCallback);
   }
 }

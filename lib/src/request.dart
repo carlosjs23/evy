@@ -1,13 +1,15 @@
 import 'dart:io';
 
+import 'package:evy/src/route.dart';
+
+/// Wrapper around the [HttpRequest] class for convenience.
 class Request {
   HttpRequest _httpRequest;
+
   Map params;
 
-  // The route can be an RegExp, a List or an String
-  dynamic route;
+  Route route;
 
-  // TODO: Implement body parser.
   Map body;
 
   Request();
@@ -17,6 +19,8 @@ class Request {
   String get ip => _httpRequest.connectionInfo.remoteAddress.address;
 
   String get method => _httpRequest.method;
+
+  String get originalUrl => _httpRequest.uri.toString();
 
   String get path => _httpRequest.uri.path;
 

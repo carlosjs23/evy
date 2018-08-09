@@ -1,60 +1,63 @@
+import 'dart:async';
 import 'dart:io';
 
-import 'route.dart';
+import 'package:evy/src/middleware.dart';
+import 'package:evy/src/route.dart';
+import 'package:evy/src/router.dart';
 
 typedef Function VoidCallback(Object error);
 
+/// The Evy Application.
 class Evy {
   HttpServer _server;
-  List<Route> _routes = List<Route>();
 
-  void listen(
+  /// TODO: Lazy router initialization.
+  Router _router = Router();
+
+  /// Serves as proxy to the [Router] get method.
+  Route get({dynamic path, Callback callback}) {
+    return _router.get(path: path, callback: callback);
+  }
+
+  /// Starts a [HttpServer] defaulting localhost:9710 or
+  /// at the user defined address:port.
+  Future<void> listen(
       {String host: 'localhost', int port: 9710, VoidCallback callback}) async {
     try {
       _server = await HttpServer.bind(
         host,
         port,
       );
-      callback(null);
+      if (callback != null) callback(null);
       _server.listen((HttpRequest request) {
-        _handleRequest(request);
+        _router.handle(request);
       });
+      return null;
     } catch (error) {
-      callback(error);
+      if (callback != null) callback(error);
+      throw error;
     }
   }
 
-  void _handleRequest(HttpRequest request) {
-    Route route = _routes.firstWhere((Route _route) => _route.match(request),
-        orElse: () => null);
-    if (route != null) {
-      route.handleRequest();
+  /// Serves as proxy to the [Router] post method.
+  Route post({dynamic path, Callback callback}) {
+    return _router.post(path: path, callback: callback);
+  }
+
+  /// Serves as proxy to the [Router] route method.
+  Route route(dynamic path) {
+    return _router.route(path);
+  }
+
+  /// Allows an external [Router] to be passed for usage in the app.
+  /// Also serves as proxy to the [Router] use method.
+  void use({dynamic path, Callback callback, Router router}) {
+    if (router != null) {
+      _router = router;
+    } else if (callback != null) {
+      _router.use(path: path, callback: callback);
     } else {
-      request.response.statusCode = HttpStatus.notFound;
-      request.response.write('404 Not Found');
-      request.response.close();
-    }
-  }
-
-  void get({path, RouteCallback callback, middlewares}) {
-    _checkPathIsValid(path);
-    if (middlewares == null) middlewares = List<RouteCallback>();
-    Route newRoute = Route('GET', path, callback, middlewares: middlewares);
-    _routes.add(newRoute);
-  }
-
-  void post({path, RouteCallback callback, middlewares}) {
-    _checkPathIsValid(path);
-    if (middlewares == null) middlewares = List<RouteCallback>();
-    Route newRoute = Route('POST', path, callback, middlewares: middlewares);
-    _routes.add(newRoute);
-  }
-
-  void _checkPathIsValid(path) {
-    if (path == null) {
-      throw Exception('Can\'t add a route without a path');
-    } else if (path is! RegExp && path is! String && path is! List<String>) {
-      throw Exception('Path should be a RegExp or String or List<String>');
+      throw Exception('Please register either middleware or a router');
     }
   }
 }
