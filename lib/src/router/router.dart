@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:evy/src/middleware.dart';
 import 'package:evy/src/request.dart';
 import 'package:evy/src/response.dart';
 
+import 'middleware.dart';
 import 'route.dart';
 
 /// The core component responsible for maintaining the middleware stack
@@ -11,7 +11,12 @@ import 'route.dart';
 class Router {
   final List<Middleware> _stack = List<Middleware>();
 
-  Route get({dynamic path, Callback callback}) {
+  Route delete({dynamic path, dynamic callback}) {
+    Route _route = route(path).delete(callback);
+    return _route;
+  }
+
+  Route get({dynamic path, dynamic callback}) {
     Route _route = route(path).get(callback);
     return _route;
   }
@@ -28,8 +33,13 @@ class Router {
     _runMiddleware(0, request, response);
   }
 
-  Route post({dynamic path, Callback callback}) {
+  Route post({dynamic path, dynamic callback}) {
     Route _route = route(path).get(callback);
+    return _route;
+  }
+
+  Route put({dynamic path, dynamic callback}) {
+    Route _route = route(path).put(callback);
     return _route;
   }
 
@@ -65,10 +75,17 @@ class Router {
   //      }
   //   }
   /// ```
-  void use({dynamic path, Callback callback}) {
+  void use({dynamic path, dynamic callback}) {
     _checkPathIsValid(path);
-    Middleware middleware = Middleware(path: path, callback: callback);
-    _stack.add(middleware);
+    if (callback is List<Callback>) {
+      callback.forEach((_callback) {
+        Middleware middleware = Middleware(path: path, callback: _callback);
+        _stack.add(middleware);
+      });
+    } else {
+      Middleware middleware = Middleware(path: path, callback: callback);
+      _stack.add(middleware);
+    }
   }
 
   void _checkPath(path) {

@@ -1,7 +1,7 @@
-import 'package:evy/src/middleware.dart';
+import 'package:evy/src/request.dart';
 import 'package:evy/src/response.dart';
 
-import 'request.dart';
+import 'middleware.dart';
 
 /// The core component responsible for handle route's methods.
 class Route {
@@ -10,6 +10,22 @@ class Route {
   final List<Middleware> _stack = List<Middleware>();
 
   Route(this._path);
+
+  /// Adds a DELETE method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
+  Route delete(dynamic callback) {
+    if (callback is List<Callback>) {
+      callback.forEach((_callback) {
+        Middleware middleware = Middleware(path: '/', callback: _callback);
+        _stack.add(middleware);
+      });
+    } else {
+      Middleware middleware = Middleware(path: '/', callback: callback);
+      _stack.add(middleware);
+    }
+    methods.add('DELETE');
+    return this;
+  }
 
   /// Start route's stack iteration.
   void dispatch(Request request, Response response, finish) {
@@ -24,19 +40,42 @@ class Route {
 
   /// Adds a GET method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
-  Route get(Callback callback) {
-    Middleware middleware = Middleware(path: '/', callback: callback);
+  Route get(dynamic callback) {
+    if (callback is List<Callback>) {
+      callback.forEach((_callback) {
+        Middleware middleware = Middleware(path: '/', callback: _callback);
+        _stack.add(middleware);
+      });
+    } else {
+      Middleware middleware = Middleware(path: '/', callback: callback);
+      _stack.add(middleware);
+    }
     methods.add('GET');
-    _stack.add(middleware);
     return this;
   }
 
   /// Adds a POST method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
-  Route post(Callback callback) {
+  Route post(dynamic callback) {
     Middleware middleware = Middleware(path: '/', callback: callback);
     methods.add('POST');
     _stack.add(middleware);
+    return this;
+  }
+
+  /// Adds a PUT method to the internal [Route] stack.
+  /// Returns the created [Route] for chaining.
+  Route put(dynamic callback) {
+    if (callback is List<Callback>) {
+      callback.forEach((_callback) {
+        Middleware middleware = Middleware(path: '/', callback: _callback);
+        _stack.add(middleware);
+      });
+    } else {
+      Middleware middleware = Middleware(path: '/', callback: callback);
+      _stack.add(middleware);
+    }
+    methods.add('PUT');
     return this;
   }
 

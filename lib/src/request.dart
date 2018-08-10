@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:evy/src/route.dart';
+import 'package:evy/src/router/route.dart';
 
 /// Wrapper around the [HttpRequest] class for convenience.
 class Request {

@@ -1,5 +1,7 @@
-import 'package:evy/evy.dart';
-import 'package:evy/src/route.dart';
+import 'package:evy/src/request.dart';
+import 'package:evy/src/response.dart';
+
+import 'route.dart';
 
 typedef void Callback(Request req, Response res, void next);
 
@@ -7,12 +9,15 @@ typedef void Callback(Request req, Response res, void next);
 /// store the path and the callback of the Requests handled by the [Router].
 class Middleware {
   final dynamic path;
-  final Callback callback;
+  final dynamic callback;
   Map params;
   Route route;
   Map _pathRegexp;
 
   Middleware({this.path, this.callback}) {
+    if (callback is! Callback && callback is! List<Callback>) {
+      throw Exception('callback should have (Request, Response, next)');
+    }
     if (path != '*' && path != '/') {
       _pathRegexp = _normalize(path);
     }
