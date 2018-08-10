@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:evy/src/middleware.dart';
-import 'package:evy/src/route.dart';
-import 'package:evy/src/router.dart';
+import 'package:evy/src/router/route.dart';
+import 'package:evy/src/router/router.dart';
 
 typedef Function VoidCallback(Object error);
 
@@ -14,8 +13,13 @@ class Evy {
   /// TODO: Lazy router initialization.
   Router _router = Router();
 
+  /// Serves as proxy to the [Router] delete method.
+  Route delete({dynamic path, dynamic callback}) {
+    return _router.delete(path: path, callback: callback);
+  }
+
   /// Serves as proxy to the [Router] get method.
-  Route get({dynamic path, Callback callback}) {
+  Route get({dynamic path, dynamic callback}) {
     return _router.get(path: path, callback: callback);
   }
 
@@ -40,8 +44,13 @@ class Evy {
   }
 
   /// Serves as proxy to the [Router] post method.
-  Route post({dynamic path, Callback callback}) {
+  Route post({dynamic path, dynamic callback}) {
     return _router.post(path: path, callback: callback);
+  }
+
+  /// Serves as proxy to the [Router] put method.
+  Route put({dynamic path, dynamic callback}) {
+    return _router.put(path: path, callback: callback);
   }
 
   /// Serves as proxy to the [Router] route method.
@@ -51,7 +60,8 @@ class Evy {
 
   /// Allows an external [Router] to be passed for usage in the app.
   /// Also serves as proxy to the [Router] use method.
-  void use({dynamic path, Callback callback, Router router}) {
+  /// TODO: Allow passing apps.
+  void use({dynamic path, dynamic callback, Router router}) {
     if (router != null) {
       _router = router;
     } else if (callback != null) {
