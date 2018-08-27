@@ -8,7 +8,7 @@ typedef void Callback(Request req, Response res, void next);
 /// The core component responsible for request match logic, parse params and
 /// store the path and the callback of the Requests handled by the [Router].
 class Middleware {
-  final dynamic path;
+  dynamic path;
   final dynamic callback;
   Map params;
   Route route;

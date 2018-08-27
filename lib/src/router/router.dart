@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:evy/src/request.dart';
 import 'package:evy/src/response.dart';
+import 'package:evy/src/server.dart';
 
 import 'middleware.dart';
 import 'route.dart';
@@ -75,16 +76,32 @@ class Router {
   //      }
   //   }
   /// ```
-  void use({dynamic path, dynamic callback}) {
+  void use({dynamic path, dynamic handler}) {
     _checkPathIsValid(path);
-    if (callback is List<Callback>) {
-      callback.forEach((_callback) {
+    if (handler is List<Callback>) {
+      handler.forEach((_callback) {
         Middleware middleware = Middleware(path: path, callback: _callback);
         _stack.add(middleware);
       });
-    } else {
-      Middleware middleware = Middleware(path: path, callback: callback);
+    } else if (handler is Callback) {
+      Middleware middleware = Middleware(path: path, callback: handler);
       _stack.add(middleware);
+    } else if (handler is Router) {
+      handler._stack.forEach((_middleware) {
+        //_middleware.path = path + _middleware.path;
+        Middleware newMiddleware = Middleware(path: _middleware.path, callback: _middleware.callback);
+        newMiddleware.route = _middleware.route;
+        _stack.add(newMiddleware);
+      });
+    } else if (handler is Evy) {
+      handler.router._stack.forEach((_middleware) {
+        //_middleware.path = path + _middleware.path;
+        Middleware newMiddleware = Middleware(path: _middleware.path, callback: _middleware.callback);
+        newMiddleware.route = _middleware.route;
+        _stack.add(newMiddleware);
+      });
+    } else {
+      throw Exception('Please register either middleware or a router');
     }
   }
 
@@ -118,7 +135,7 @@ class Router {
 
     /// TODO: Implement a logger for internal usage.
     var finish = () {
-      print('FINISH CALLED');
+      return;
     };
 
     if (index >= _stack.length) {

@@ -13,6 +13,8 @@ class Evy {
   /// TODO: Lazy router initialization.
   Router _router = Router();
 
+  Router get router => _router;
+
   /// Serves as proxy to the [Router] delete method.
   Route delete({dynamic path, dynamic callback}) {
     return _router.delete(path: path, callback: callback);
@@ -61,13 +63,7 @@ class Evy {
   /// Allows an external [Router] to be passed for usage in the app.
   /// Also serves as proxy to the [Router] use method.
   /// TODO: Allow passing apps.
-  void use({dynamic path, dynamic callback, Router router}) {
-    if (router != null) {
-      _router = router;
-    } else if (callback != null) {
-      _router.use(path: path, callback: callback);
-    } else {
-      throw Exception('Please register either middleware or a router');
-    }
+  void use({dynamic path, dynamic handler}) {
+    _router.use(path: path, handler: handler);
   }
 }

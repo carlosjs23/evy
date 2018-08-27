@@ -3,15 +3,23 @@ import 'package:evy/evy.dart';
 void main() {
   var app = Evy();
 
+  var subApp = Evy();
+
+  subApp.use(path: '/', handler: logRequest);
+
+  subApp.get(path: '/saludar/:name', callback: sayHello);
+
   /// This middleware will match all routes.
-  app.use(path: '*', callback: logRequest);
+  //app.use(path: '/', handler: logRequest);
+
+  app.use(path: '/subapp', handler: subApp);
 
   /// This middleware will be called only for '/greet/:name' routes.
-  app.use(path: '/greet/:name', callback: checkName);
+  app.use(path: '/greet/:name', handler: checkName);
 
   /// This middleware will be called only for '/greet/:name' routes.
   /// It will be executed after checkName middleware.
-  app.use(path: '/greet/:name', callback: changeName);
+  app.use(path: '/greet/:name', handler: changeName);
 
   /// Or just pass the middleware callbacks as a list.
   ///  app.use(path: '/greet/:name', callback: [checkName, changeName]);
