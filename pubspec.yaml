@@ -1,5 +1,5 @@
 name: evy
-version: 0.0.4
+version: 0.0.5
 
 description: Evy is a Dart 2 Web Framework, with an ExpressJS like API.
 author: Carlos A. Escobar <ingcarlosandresescobar@gmail.com>
