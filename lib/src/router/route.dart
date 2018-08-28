@@ -16,11 +16,11 @@ class Route {
   Route delete(dynamic callback) {
     if (callback is List<Callback>) {
       callback.forEach((_callback) {
-        Middleware middleware = Middleware(path: '/', callback: _callback);
+        Middleware middleware = Middleware(path: '/', handler: _callback);
         _stack.add(middleware);
       });
     } else {
-      Middleware middleware = Middleware(path: '/', callback: callback);
+      Middleware middleware = Middleware(path: '/', handler: callback);
       _stack.add(middleware);
     }
     methods.add('DELETE');
@@ -43,11 +43,11 @@ class Route {
   Route get(dynamic callback) {
     if (callback is List<Callback>) {
       callback.forEach((_callback) {
-        Middleware middleware = Middleware(path: '/', callback: _callback);
+        Middleware middleware = Middleware(path: '/', handler: _callback);
         _stack.add(middleware);
       });
     } else {
-      Middleware middleware = Middleware(path: '/', callback: callback);
+      Middleware middleware = Middleware(path: '/', handler: callback);
       _stack.add(middleware);
     }
     methods.add('GET');
@@ -57,7 +57,7 @@ class Route {
   /// Adds a POST method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
   Route post(dynamic callback) {
-    Middleware middleware = Middleware(path: '/', callback: callback);
+    Middleware middleware = Middleware(path: '/', handler: callback);
     methods.add('POST');
     _stack.add(middleware);
     return this;
@@ -68,11 +68,11 @@ class Route {
   Route put(dynamic callback) {
     if (callback is List<Callback>) {
       callback.forEach((_callback) {
-        Middleware middleware = Middleware(path: '/', callback: _callback);
+        Middleware middleware = Middleware(path: '/', handler: _callback);
         _stack.add(middleware);
       });
     } else {
-      Middleware middleware = Middleware(path: '/', callback: callback);
+      Middleware middleware = Middleware(path: '/', handler: callback);
       _stack.add(middleware);
     }
     methods.add('PUT');
@@ -96,7 +96,7 @@ class Route {
     };
 
     var finish = () {
-      print('FINISH CALLED');
+      return;
     };
 
     if (index >= _stack.length) {
