@@ -16,13 +16,13 @@ class Evy {
   Router get router => _router;
 
   /// Serves as proxy to the [Router] delete method.
-  Route delete({dynamic path, dynamic callback}) {
-    return _router.delete(path: path, callback: callback);
+  Route delete({dynamic path, dynamic handler}) {
+    return _router.delete(path: path, handler: handler);
   }
 
   /// Serves as proxy to the [Router] get method.
-  Route get({dynamic path, dynamic callback}) {
-    return _router.get(path: path, callback: callback);
+  Route get({dynamic path, dynamic handler}) {
+    return _router.get(path: path, handler: handler);
   }
 
   /// Starts a [HttpServer] defaulting localhost:9710 or
@@ -46,13 +46,13 @@ class Evy {
   }
 
   /// Serves as proxy to the [Router] post method.
-  Route post({dynamic path, dynamic callback}) {
-    return _router.post(path: path, callback: callback);
+  Route post({dynamic path, dynamic handler}) {
+    return _router.post(path: path, handler: handler);
   }
 
   /// Serves as proxy to the [Router] put method.
-  Route put({dynamic path, dynamic callback}) {
-    return _router.put(path: path, callback: callback);
+  Route put({dynamic path, dynamic handler}) {
+    return _router.put(path: path, handler: handler);
   }
 
   /// Serves as proxy to the [Router] route method.
@@ -60,10 +60,11 @@ class Evy {
     return _router.route(path);
   }
 
-  /// Allows an external [Router] to be passed for usage in the app.
-  /// Also serves as proxy to the [Router] use method.
-  /// TODO: Allow passing apps.
+  /// Serves as proxy to the [Router] use method.
   void use({dynamic path, dynamic handler}) {
+    if (path == null) {
+      path = '/';
+    }
     _router.use(path: path, handler: handler);
   }
 }

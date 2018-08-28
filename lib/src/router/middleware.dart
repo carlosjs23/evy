@@ -9,13 +9,13 @@ typedef void Callback(Request req, Response res, void next);
 /// store the path and the callback of the Requests handled by the [Router].
 class Middleware {
   dynamic path;
-  final dynamic callback;
+  final dynamic handler;
   Map params;
   Route route;
   Map _pathRegexp;
 
-  Middleware({this.path, this.callback}) {
-    if (callback is! Callback && callback is! List<Callback>) {
+  Middleware({this.path, this.handler}) {
+    if (handler is! Callback && handler is! List<Callback>) {
       throw Exception('callback should have (Request, Response, next)');
     }
     if (path != '*' && path != '/') {
@@ -25,7 +25,7 @@ class Middleware {
 
   /// Calls the respective callback for this middleware.
   void handleRequest(Request request, Response response, void next) {
-    callback(request, response, next);
+    handler(request, response, next);
   }
 
   /// Request's patch matching logic.

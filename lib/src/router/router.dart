@@ -12,13 +12,13 @@ import 'route.dart';
 class Router {
   final List<Middleware> _stack = List<Middleware>();
 
-  Route delete({dynamic path, dynamic callback}) {
-    Route _route = route(path).delete(callback);
+  Route delete({dynamic path, dynamic handler}) {
+    Route _route = route(path).delete(handler);
     return _route;
   }
 
-  Route get({dynamic path, dynamic callback}) {
-    Route _route = route(path).get(callback);
+  Route get({dynamic path, dynamic handler}) {
+    Route _route = route(path).get(handler);
     return _route;
   }
 
@@ -34,13 +34,13 @@ class Router {
     _runMiddleware(0, request, response);
   }
 
-  Route post({dynamic path, dynamic callback}) {
-    Route _route = route(path).get(callback);
+  Route post({dynamic path, dynamic handler}) {
+    Route _route = route(path).get(handler);
     return _route;
   }
 
-  Route put({dynamic path, dynamic callback}) {
-    Route _route = route(path).put(callback);
+  Route put({dynamic path, dynamic handler}) {
+    Route _route = route(path).put(handler);
     return _route;
   }
 
@@ -55,7 +55,7 @@ class Router {
     _checkPath(path);
     Route route = Route(path);
 
-    Middleware middleware = Middleware(path: path, callback: route.dispatch);
+    Middleware middleware = Middleware(path: path, handler: route.dispatch);
     middleware.route = route;
 
     _stack.add(middleware);
@@ -64,6 +64,9 @@ class Router {
 
   /// Uses the passed middleware to process requests for the specified path
   /// before the routes.
+  ///
+  /// If an app or a router is passed then their middleware are extracted
+  /// and added to the main app's stack.
   ///
   /// ```
   ///  router.use(path: '/greet/:name', callback: checkName);
@@ -80,23 +83,25 @@ class Router {
     _checkPathIsValid(path);
     if (handler is List<Callback>) {
       handler.forEach((_callback) {
-        Middleware middleware = Middleware(path: path, callback: _callback);
+        Middleware middleware = Middleware(path: path, handler: _callback);
         _stack.add(middleware);
       });
     } else if (handler is Callback) {
-      Middleware middleware = Middleware(path: path, callback: handler);
+      Middleware middleware = Middleware(path: path, handler: handler);
       _stack.add(middleware);
     } else if (handler is Router) {
       handler._stack.forEach((_middleware) {
-        //_middleware.path = path + _middleware.path;
-        Middleware newMiddleware = Middleware(path: _middleware.path, callback: _middleware.callback);
+        _middleware.path = path + _middleware.path;
+        Middleware newMiddleware =
+            Middleware(path: _middleware.path, handler: _middleware.handler);
         newMiddleware.route = _middleware.route;
         _stack.add(newMiddleware);
       });
     } else if (handler is Evy) {
       handler.router._stack.forEach((_middleware) {
-        //_middleware.path = path + _middleware.path;
-        Middleware newMiddleware = Middleware(path: _middleware.path, callback: _middleware.callback);
+        _middleware.path = path + _middleware.path;
+        Middleware newMiddleware =
+            Middleware(path: _middleware.path, handler: _middleware.handler);
         newMiddleware.route = _middleware.route;
         _stack.add(newMiddleware);
       });

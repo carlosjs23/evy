@@ -3,16 +3,8 @@ import 'package:evy/evy.dart';
 void main() {
   var app = Evy();
 
-  var subApp = Evy();
-
-  subApp.use(path: '/', handler: logRequest);
-
-  subApp.get(path: '/saludar/:name', callback: sayHello);
-
   /// This middleware will match all routes.
-  //app.use(path: '/', handler: logRequest);
-
-  app.use(path: '/subapp', handler: subApp);
+  app.use(handler: logRequest);
 
   /// This middleware will be called only for '/greet/:name' routes.
   app.use(path: '/greet/:name', handler: checkName);
@@ -25,13 +17,13 @@ void main() {
   ///  app.use(path: '/greet/:name', callback: [checkName, changeName]);
 
   ///Routes can have a callback for process the request.
-  app.get(path: '/greet/:name', callback: sayHello);
+  app.get(path: '/greet/:name', handler: sayHello);
 
   ///Path can be a RegExp, this route will match /evy, /evyhi, /whateverevy... .
-  app.get(path: RegExp('/.*evy'), callback: sayHello);
+  app.get(path: RegExp('/.*evy'), handler: sayHello);
 
   ///Path can be a List of Strings, this will match /users, /user and /client.
-  app.get(path: ['/users', '/user', '/client'], callback: sayHello);
+  app.get(path: ['/users', '/user', '/client'], handler: sayHello);
 
   app.listen(
       port: 3000,
