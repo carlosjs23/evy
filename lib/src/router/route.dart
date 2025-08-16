@@ -6,10 +6,13 @@ import 'middleware.dart';
 /// The core component responsible for handle route's methods.
 class Route {
   final dynamic _path;
-  List<String> methods = List<String>();
-  final List<Middleware> _stack = List<Middleware>();
+  List<String> methods = <String>[];
+  final List<Middleware> _stack = <Middleware>[];
 
   Route(this._path);
+
+  /// Gets the path pattern for this route.
+  dynamic get path => _path;
 
   /// Adds a DELETE method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
@@ -28,14 +31,14 @@ class Route {
   }
 
   /// Start route's stack iteration.
-  void dispatch(Request request, Response response, finish) {
+  Future<void> dispatch(Request request, Response response, finish) async {
     if (_stack.length == 0) {
       return finish();
     }
 
     int index = 0;
 
-    _runMiddleware(index, request, response);
+    await _runMiddleware(index, request, response);
   }
 
   /// Adds a GET method to the internal [Route] stack.
@@ -84,18 +87,19 @@ class Route {
   ///
   /// If it match, the callback for the [Route] stored
   /// in the [Middleware] will be called.
-  void _runMiddleware(int index, Request request, Response response) {
+  Future<void> _runMiddleware(
+      int index, Request request, Response response) async {
     /// Defines the next() callback for call it later.
     /// It allows to pass to the next callback when various callbacks are chained.
     ///
     /// ```
     ///  app.route('/greet/:name').get(sayHello).get(storeResult);
     /// ```
-    var nextCallback = () {
-      _runMiddleware(++index, request, response);
+    var nextCallback = () async {
+      await _runMiddleware(++index, request, response);
     };
 
-    var finish = () {
+    var finish = () async {
       return;
     };
 
@@ -111,6 +115,6 @@ class Route {
       return finish();
     }
 
-    middleware.handleRequest(request, response, nextCallback);
+    await middleware.handleRequest(request, response, nextCallback);
   }
 }

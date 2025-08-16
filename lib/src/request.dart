@@ -4,19 +4,19 @@ import 'package:evy/src/router/route.dart';
 
 /// Wrapper around the [HttpRequest] class for convenience.
 class Request {
-  HttpRequest _httpRequest;
+  late HttpRequest _httpRequest;
 
-  Map params;
+  Map? params;
 
-  Route route;
+  Route? route;
 
-  Map body;
+  Map? body;
 
   Request();
 
   String get hostname => _httpRequest.uri.host;
 
-  String get ip => _httpRequest.connectionInfo.remoteAddress.address;
+  String get ip => _httpRequest.connectionInfo?.remoteAddress.address ?? '';
 
   String get method => _httpRequest.method;
 
@@ -27,6 +27,12 @@ class Request {
   String get query => _httpRequest.uri.query;
 
   Map get queryParams => _httpRequest.uri.queryParameters;
+
+  HttpHeaders get headers => _httpRequest.headers;
+
+  String? get contentType => _httpRequest.headers.contentType?.toString();
+
+  HttpRequest get httpRequest => _httpRequest;
 
   static Request from(HttpRequest httpRequest) {
     Request newRequest = Request();

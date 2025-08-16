@@ -3,16 +3,16 @@ import 'package:evy/src/response.dart';
 
 import 'route.dart';
 
-typedef void Callback(Request req, Response res, void next);
+typedef Future<void> Callback(Request req, Response res, Function next);
 
 /// The core component responsible for request match logic, parse params and
 /// store the path and the callback of the Requests handled by the [Router].
 class Middleware {
   dynamic path;
   final dynamic handler;
-  Map params;
-  Route route;
-  Map _pathRegexp;
+  Map? params;
+  Route? route;
+  Map? _pathRegexp;
 
   Middleware({this.path, this.handler}) {
     if (handler is! Callback && handler is! List<Callback>) {
@@ -24,13 +24,14 @@ class Middleware {
   }
 
   /// Calls the respective callback for this middleware.
-  void handleRequest(Request request, Response response, void next) {
-    handler(request, response, next);
+  Future<void> handleRequest(
+      Request request, Response response, Function next) async {
+    await handler(request, response, next);
   }
 
   /// Request's patch matching logic.
   bool match(dynamic path) {
-    bool match;
+    bool match = false;
     if (path != null) {
       if (this.path == '*') {
         /// DISABLED UNTIL WE IMPLEMENT MERGE PARAMS.
@@ -41,14 +42,14 @@ class Middleware {
       if (this.path == '/') {
         return true;
       }
-      match = _pathRegexp['regexp'].hasMatch(path);
+      match = _pathRegexp!['regexp'].hasMatch(path);
     }
 
     if (!match) {
       return false;
     }
 
-    params = _parseParams(path, _pathRegexp);
+    params = _parseParams(path, _pathRegexp!);
 
     return true;
   }
@@ -60,9 +61,9 @@ class Middleware {
     for (var i = 0; i < routePath['keys'].length; i++) {
       String param;
       try {
-        param = Uri.decodeQueryComponent(paramsMatch[i + 1]);
+        param = Uri.decodeQueryComponent(paramsMatch[i + 1]!);
       } catch (e) {
-        param = paramsMatch[i + 1];
+        param = paramsMatch[i + 1]!;
       }
 
       params[routePath['keys'][i]] = param;
@@ -71,10 +72,9 @@ class Middleware {
   }
 
   /// Creates an regexp from a path.
-  static Map _normalize(dynamic path, {List<String> keys, bool strict: false}) {
-    if (keys == null) {
-      keys = [];
-    }
+  static Map _normalize(dynamic path,
+      {List<String>? keys, bool strict = false}) {
+    keys ??= [];
 
     if (path is RegExp) {
       return {'regexp': path, 'keys': keys};
@@ -101,7 +101,7 @@ class Middleware {
         replace.write('?');
       }
 
-      keys.add(placeholder[2]);
+      keys!.add(placeholder[2]!);
 
       return replace.toString();
     }).replaceAll('//', '/');
