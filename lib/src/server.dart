@@ -4,14 +4,14 @@ import 'dart:io';
 import 'package:evy/src/router/route.dart';
 import 'package:evy/src/router/router.dart';
 
-typedef Function VoidCallback(Object error);
+typedef VoidCallback = void Function(Object? error);
 
 /// The Evy Application.
 class Evy {
-  HttpServer _server;
+  HttpServer? _server;
 
   /// TODO: Lazy router initialization.
-  Router _router = Router();
+  final Router _router = Router();
 
   Router get router => _router;
 
@@ -28,14 +28,16 @@ class Evy {
   /// Starts a [HttpServer] defaulting localhost:9710 or
   /// at the user defined address:port.
   Future<void> listen(
-      {String host: 'localhost', int port: 9710, VoidCallback callback}) async {
+      {String host = 'localhost',
+      int port = 9710,
+      VoidCallback? callback}) async {
     try {
       _server = await HttpServer.bind(
         host,
         port,
       );
       if (callback != null) callback(null);
-      _server.listen((HttpRequest request) {
+      _server!.listen((HttpRequest request) {
         _router.handle(request);
       });
       return null;

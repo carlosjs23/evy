@@ -10,7 +10,7 @@ import 'route.dart';
 /// The core component responsible for maintaining the middleware stack
 /// and handle the requests that comes from the app.
 class Router {
-  final List<Middleware> _stack = List<Middleware>();
+  final List<Middleware> _stack = <Middleware>[];
 
   Route delete({dynamic path, dynamic handler}) {
     Route _route = route(path).delete(handler);
@@ -31,11 +31,16 @@ class Router {
     Request request = Request.from(httpRequest);
     Response response = Response(httpRequest.response);
 
-    _runMiddleware(0, request, response);
+    _runMiddleware(0, request, response).catchError((error) {
+      if (!response.closed) {
+        response.status(500);
+        response.send('Internal Server Error');
+      }
+    });
   }
 
   Route post({dynamic path, dynamic handler}) {
-    Route _route = route(path).get(handler);
+    Route _route = route(path).post(handler);
     return _route;
   }
 
@@ -131,15 +136,16 @@ class Router {
   ///
   /// If it match, the callback stored in the middleware will be called.
   /// The callback it's either a middleware function or a router one.
-  void _runMiddleware(int index, Request request, Response response) {
+  Future<void> _runMiddleware(
+      int index, Request request, Response response) async {
     /// Defines the next() callback so we or a route or middleware
     /// can call it to iterate through the middleware's stack.
-    var nextCallback = () {
-      _runMiddleware(++index, request, response);
+    var nextCallback = () async {
+      await _runMiddleware(++index, request, response);
     };
 
     /// TODO: Implement a logger for internal usage.
-    var finish = () {
+    var finish = () async {
       return;
     };
 
@@ -149,12 +155,8 @@ class Router {
 
     String path = request.path;
 
-    if (path == null) {
-      return finish();
-    }
-
     Middleware middleware = _stack[index];
-    Route route = middleware.route;
+    Route? route = middleware.route;
     bool match = middleware.match(path);
 
     if (!match) {
@@ -162,26 +164,22 @@ class Router {
     }
 
     /// TODO: Merge params.
-    if (request.params == null) {
-      request.params = middleware.params;
-    }
+    request.params ??= middleware.params;
 
     /// It's a middleware so call it's callback.
     if (route == null) {
-      return middleware.handleRequest(request, response, nextCallback);
+      return await middleware.handleRequest(request, response, nextCallback);
     }
 
     /// It's a route so call the route dispatch method.
-    if (route != null) {
-      String method = request.method;
-      bool hasMethod = route.methods.contains(method);
+    String method = request.method;
+    bool hasMethod = route.methods.contains(method);
 
-      if (!hasMethod) {
-        return nextCallback();
-      }
-
-      request.route = route;
-      route.dispatch(request, response, finish);
+    if (!hasMethod) {
+      return nextCallback();
     }
+
+    request.route = route;
+    await route.dispatch(request, response, finish);
   }
 }

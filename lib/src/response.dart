@@ -2,11 +2,13 @@ import 'dart:io';
 
 /// Wrapper around the [HttpResponse] class for convenience.
 class Response {
-  HttpResponse _httpResponse;
+  late HttpResponse _httpResponse;
   bool _closed = false;
 
-  Response([HttpResponse existingResponse]) {
-    this._httpResponse = existingResponse;
+  Response([HttpResponse? existingResponse]) {
+    if (existingResponse != null) {
+      this._httpResponse = existingResponse;
+    }
   }
 
   bool get closed => _closed;
@@ -33,6 +35,10 @@ class Response {
     }
 
     _httpResponse.statusCode = statusCode;
+  }
+
+  void status(int statusCode) {
+    this.statusCode(statusCode);
   }
 
   /// This method will throw an exception when called if the response has already
