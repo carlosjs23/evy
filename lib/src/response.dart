@@ -37,8 +37,9 @@ class Response {
     _httpResponse.statusCode = statusCode;
   }
 
-  void status(int statusCode) {
+  Response status(int statusCode) {
     this.statusCode(statusCode);
+    return this;
   }
 
   /// This method will throw an exception when called if the response has already
