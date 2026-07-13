@@ -32,9 +32,15 @@ class Router {
     Response response = Response(httpRequest.response);
 
     _runMiddleware(0, request, response).catchError((error) {
-      if (!response.closed) {
-        response.status(500);
-        response.send('Internal Server Error');
+      print(
+          'Unhandled error while handling ${request.method} ${request.path}: $error');
+      try {
+        if (!response.closed) {
+          response.status(500);
+          response.send('Internal Server Error');
+        }
+      } catch (_) {
+        // The response was already committed; nothing more can be sent.
       }
     });
   }
@@ -163,8 +169,10 @@ class Router {
       return nextCallback();
     }
 
-    /// TODO: Merge params.
-    request.params ??= middleware.params;
+    if (middleware.params != null) {
+      request.params ??= {};
+      request.params!.addAll(middleware.params!);
+    }
 
     /// It's a middleware so call it's callback.
     if (route == null) {
