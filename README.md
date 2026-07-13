@@ -95,7 +95,9 @@ Future<void> sayHello(Request req, Response res, next) async {
   }
 }
 
-/// Example POST handler that uses parsed request body
+/// Example POST handler that uses the parsed request body.
+/// `req.body` is dynamic: a Map for JSON objects and form data,
+/// a List for JSON arrays, or a String for text bodies.
 Future<void> createUser(Request req, Response res, next) async {
   if (req.body != null) {
     final name = req.body!['name'];
@@ -106,8 +108,7 @@ Future<void> createUser(Request req, Response res, next) async {
     
     res.send('User created: $name ($email)');
   } else {
-    res.status(400);
-    res.send('Missing request body');
+    res.status(400).send('Missing request body');
   }
 }
 ```
@@ -125,20 +126,21 @@ Future<void> createUser(Request req, Response res, next) async {
 
 ### Body Parser Examples
 
-```dart
-// JSON requests
+```bash
+# JSON requests
 curl -X POST http://localhost:3000/api/users \
   -H "Content-Type: application/json" \
   -d '{"name":"Jane","email":"jane@example.com"}'
 
-// Form data requests  
+# Form data requests
 curl -X POST http://localhost:3000/users \
   -d "name=John&email=john@example.com"
 ```
 
+``req.body`` is ``dynamic`` and its type depends on the payload: a JSON object or form data parses to a ``Map``, a JSON array to a ``List``, and ``BodyParser.text()`` gives the raw ``String``.
+
 ### Todo
  - [ ] Routes group.
  - [ ] Publish package to Dart Packages.
- - [ ] Testing framework.
+ - [X] Testing framework.
  - [ ] Logo design.
- 
