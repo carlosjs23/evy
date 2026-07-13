@@ -20,6 +20,7 @@ This release represents a complete architectural transformation from synchronous
 - **Concurrent request handling** - Non-blocking I/O operations
 - **Enhanced Request class** - Added `body`, `headers`, `contentType`, and `httpRequest` properties
 - **Response.status() method** - Convenience method for setting status codes
+- **Test suite** - Body parser, router, route, and response tests, run with `dart test`
 
 ### Changed
 - **BREAKING**: All middleware signatures changed from `void` to `Future<void>`
@@ -28,11 +29,18 @@ This release represents a complete architectural transformation from synchronous
 - **Router middleware execution** - Now properly handles async operations
 - **Error handling** - Async error propagation throughout middleware stack
 - **Example application** - Updated to demonstrate async patterns and body parsing
+- **Request.body is `dynamic`** - A JSON object parses to a `Map`, a JSON array to a `List`, and `BodyParser.text()` yields the raw `String`
+- **Request.contentType** - Now returns `ContentType?` (from `dart:io`) instead of a `String`
+- **Response.status() returns `Response`** - Enables chaining, e.g. `res.status(400).send('Bad request')`
 
 ### Fixed
 - **POST route registration bug** - Router.post() was incorrectly calling .get() internally
 - **Middleware execution flow** - Proper async await chains prevent hanging requests
 - **Request body parsing** - No longer blocks the event loop
+- **Body parser error handling** - Oversized bodies and malformed UTF-8/invalid bodies now reliably return a 400 response instead of hanging the request or crashing the server
+- **Nested URL-encoded parsing** - `user[name]=John` parses to `{'user': {'name': 'John'}}`, deeper keys like `a[b][c]=v` nest properly, `tags[]=x&tags[]=y` yields `{'tags': ['x', 'y']}`, and duplicate scalar keys collect into a list; `extended: false` keeps bracket keys flat
+- **Route params merging** - Route params (`:name`) now merge with params set by earlier middleware instead of overwriting them
+- **Route.post()** - Now accepts a `List<Callback>` like get/put/delete
 
 ### Performance
 - **Concurrent operations** - Multiple requests can now be processed simultaneously

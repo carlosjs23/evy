@@ -10,7 +10,7 @@ class Request {
 
   Route? route;
 
-  Map? body;
+  dynamic body;
 
   Request();
 
@@ -30,7 +30,7 @@ class Request {
 
   HttpHeaders get headers => _httpRequest.headers;
 
-  String? get contentType => _httpRequest.headers.contentType?.toString();
+  ContentType? get contentType => _httpRequest.headers.contentType;
 
   HttpRequest get httpRequest => _httpRequest;
 

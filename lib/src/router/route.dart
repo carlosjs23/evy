@@ -38,7 +38,7 @@ class Route {
 
     int index = 0;
 
-    await _runMiddleware(index, request, response);
+    await _runMiddleware(index, request, response, finish);
   }
 
   /// Adds a GET method to the internal [Route] stack.
@@ -60,9 +60,16 @@ class Route {
   /// Adds a POST method to the internal [Route] stack.
   /// Returns the created [Route] for chaining.
   Route post(dynamic callback) {
-    Middleware middleware = Middleware(path: '/', handler: callback);
+    if (callback is List<Callback>) {
+      callback.forEach((_callback) {
+        Middleware middleware = Middleware(path: '/', handler: _callback);
+        _stack.add(middleware);
+      });
+    } else {
+      Middleware middleware = Middleware(path: '/', handler: callback);
+      _stack.add(middleware);
+    }
     methods.add('POST');
-    _stack.add(middleware);
     return this;
   }
 
@@ -88,7 +95,7 @@ class Route {
   /// If it match, the callback for the [Route] stored
   /// in the [Middleware] will be called.
   Future<void> _runMiddleware(
-      int index, Request request, Response response) async {
+      int index, Request request, Response response, finish) async {
     /// Defines the next() callback for call it later.
     /// It allows to pass to the next callback when various callbacks are chained.
     ///
@@ -96,11 +103,7 @@ class Route {
     ///  app.route('/greet/:name').get(sayHello).get(storeResult);
     /// ```
     var nextCallback = () async {
-      await _runMiddleware(++index, request, response);
-    };
-
-    var finish = () async {
-      return;
+      await _runMiddleware(++index, request, response, finish);
     };
 
     if (index >= _stack.length) {
