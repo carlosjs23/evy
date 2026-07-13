@@ -171,7 +171,12 @@ class Router {
 
     if (middleware.params != null) {
       request.params ??= {};
-      request.params!.addAll(middleware.params!);
+
+      /// Fill in params derived from the path without overwriting values
+      /// already set (or mutated) by earlier middleware.
+      middleware.params!.forEach((key, value) {
+        request.params!.putIfAbsent(key, () => value);
+      });
     }
 
     /// It's a middleware so call it's callback.

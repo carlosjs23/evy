@@ -66,6 +66,29 @@ void main() {
       expect(result.body, equals('name=Alberto injected=yes'));
     });
 
+    test('mutations by earlier middleware persist to later handlers',
+        () async {
+      final app = Evy();
+      app.use(
+          path: '/greet/:name',
+          handler: (Request req, Response res, next) async {
+            if (req.params?['name'] == 'Alberto') {
+              req.params!['name'] = 'Carlos';
+            }
+            await next();
+          });
+      app.get(
+          path: '/greet/:name',
+          handler: (Request req, Response res, next) async {
+            res.send('Hello ${req.params?['name']}');
+          });
+      await serve(app);
+
+      final result = await getRequest(port, '/greet/Alberto');
+      expect(result.status, equals(200));
+      expect(result.body, equals('Hello Carlos'));
+    });
+
     test('are merged across multiple path-matched middlewares', () async {
       final app = Evy();
       final seen = <String, dynamic>{};
