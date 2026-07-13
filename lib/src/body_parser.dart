@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:evy/src/request.dart';
 import 'package:evy/src/response.dart';
@@ -13,8 +13,7 @@ class BodyParser {
         return await next();
       }
 
-      final contentType = req.headers.contentType;
-      if (contentType == null || contentType.mimeType != 'application/json') {
+      if (req.contentType?.mimeType != 'application/json') {
         return await next();
       }
 
@@ -38,9 +37,7 @@ class BodyParser {
         return await next();
       }
 
-      final contentType = req.headers.contentType;
-      if (contentType == null ||
-          contentType.mimeType != 'application/x-www-form-urlencoded') {
+      if (req.contentType?.mimeType != 'application/x-www-form-urlencoded') {
         return await next();
       }
 
@@ -64,14 +61,14 @@ class BodyParser {
         return await next();
       }
 
-      final contentType = req.headers.contentType;
-      if (contentType == null || !contentType.mimeType.startsWith('text/')) {
+      final mimeType = req.contentType?.mimeType;
+      if (mimeType == null || !mimeType.startsWith('text/')) {
         return await next();
       }
 
       try {
         final body = await _readBody(req.httpRequest, limit);
-        req.body = {'raw': body};
+        req.body = body;
         await next();
       } catch (e) {
         res.status(400);
@@ -87,29 +84,16 @@ class BodyParser {
       throw Exception('Request body too large');
     }
 
-    final completer = Completer<String>();
-    final chunks = <List<int>>[];
-    int totalBytes = 0;
+    final builder =
+        await request.fold<BytesBuilder>(BytesBuilder(), (builder, chunk) {
+      builder.add(chunk);
+      if (limit != null && builder.length > limit) {
+        throw Exception('Request body too large');
+      }
+      return builder;
+    });
 
-    request.listen(
-      (List<int> chunk) {
-        totalBytes += chunk.length;
-        if (limit != null && totalBytes > limit) {
-          throw Exception('Request body too large');
-        }
-        chunks.add(chunk);
-      },
-      onDone: () {
-        final bytes = chunks.expand((chunk) => chunk).toList();
-        final body = utf8.decode(bytes);
-        completer.complete(body);
-      },
-      onError: (error) {
-        completer.completeError(error);
-      },
-    );
-
-    return completer.future;
+    return utf8.decode(builder.takeBytes());
   }
 
   /// Parse URL-encoded form data
@@ -131,8 +115,9 @@ class BodyParser {
         value = Uri.decodeQueryComponent(pair.substring(index + 1));
       }
 
-      if (extended && key.contains('[') && key.contains(']')) {
-        _setNestedValue(result, key, value);
+      final segments = extended ? _parseKeySegments(key) : null;
+      if (segments != null && segments.length > 1) {
+        _setNestedValue(result, segments, value);
       } else {
         if (result.containsKey(key)) {
           if (result[key] is List) {
@@ -149,39 +134,51 @@ class BodyParser {
     return result;
   }
 
+  /// Split a key like `a[b][c]` into segments ['a', 'b', 'c'].
+  /// A trailing empty segment (e.g. `tags[]`) means an array push.
+  /// Returns null when the brackets are malformed.
+  static List<String>? _parseKeySegments(String key) {
+    final match = RegExp(r'^([^\[\]]+)((?:\[[^\[\]]*\])*)$').firstMatch(key);
+    if (match == null) return null;
+
+    final segments = <String>[match.group(1)!];
+    for (final bracket in RegExp(r'\[([^\[\]]*)\]').allMatches(match.group(2)!)) {
+      segments.add(bracket.group(1)!);
+    }
+    return segments;
+  }
+
   /// Set nested values for extended URL encoding (e.g., user[name]=John)
   static void _setNestedValue(
-      Map<String, dynamic> result, String key, String value) {
-    final bracketIndex = key.indexOf('[');
-    if (bracketIndex == -1) {
-      result[key] = value;
-      return;
+      Map<String, dynamic> result, List<String> segments, String value) {
+    final isArrayPush = segments.last.isEmpty;
+    final path =
+        isArrayPush ? segments.sublist(0, segments.length - 1) : segments;
+
+    Map<String, dynamic> current = result;
+    for (var i = 0; i < path.length - 1; i++) {
+      final segment = path[i];
+      if (current[segment] is! Map<String, dynamic>) {
+        current[segment] = <String, dynamic>{};
+      }
+      current = current[segment] as Map<String, dynamic>;
     }
 
-    final baseKey = key.substring(0, bracketIndex);
-    final remainingKey = key.substring(bracketIndex + 1, key.length - 1);
-
-    result[baseKey] ??= <String, dynamic>{};
-
-    if (remainingKey.isEmpty) {
-      if (result[baseKey] is List) {
-        (result[baseKey] as List).add(value);
-      } else if (result[baseKey] is Map) {
-        final list = <dynamic>[];
-        if ((result[baseKey] as Map).isNotEmpty) {
-          list.add(result[baseKey]);
-        }
-        list.add(value);
-        result[baseKey] = list;
+    final last = path.last;
+    if (isArrayPush) {
+      if (current[last] is List) {
+        (current[last] as List).add(value);
       } else {
-        result[baseKey] = [value];
+        current[last] = <dynamic>[value];
+      }
+    } else if (current.containsKey(last)) {
+      if (current[last] is List) {
+        (current[last] as List).add(value);
+      } else {
+        current[last] = [current[last], value];
       }
     } else {
-      if (result[baseKey] is! Map) {
-        result[baseKey] = <String, dynamic>{};
-      }
-      _setNestedValue(
-          result[baseKey] as Map<String, dynamic>, '$remainingKey]', value);
+      current[last] = value;
     }
   }
 }
